@@ -347,7 +347,7 @@
         <el-button type="primary" @click="showDialog = false">下一票</el-button> -->
       </span>
     </el-dialog>
-
+g
     <el-dialog title="单号导入" :visible.sync="showSingleDialog" width="350px">
     <el-form :model="dataForm" label-width="80px" :rules="dataFormRules" ref="dataForm" >
     <!--  <div class="_item" style="margin-bottom: 10px;">
