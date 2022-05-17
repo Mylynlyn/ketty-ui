@@ -1,7 +1,7 @@
 <template>
   <el-submenu v-if="menu.children && menu.children.length >= 1" :index="'' + menu.id">
     <template slot="title">
-      <i :class="menu.icon" ></i>
+      <i :class="menu.icon" class='menu_icon'></i>
       <span slot="title">{{menu.name}}</span>
     </template>
     <MenuTree v-for="item in menu.children" :key="item.id" :menu="item"></MenuTree>
@@ -40,4 +40,8 @@ export default {
 // .el-submenu, .el-menu-item {
 //   background-color: #3c4b5a44;
 // }
+.menu_icon{
+  display:inline-block;
+  font-size:14px
+}
 </style>

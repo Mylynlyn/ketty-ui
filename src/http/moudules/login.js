@@ -4,7 +4,7 @@ import axios from '../axios'
  * 系统登录模块
  */
 
-// 登录
+// 登录 这里就是不同的模块
 export const login = data => {
     return axios({
         url: 'login',

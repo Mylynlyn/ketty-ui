@@ -126,7 +126,8 @@ export function findNavTree() {
         "level": 1,
         "children": []
       }]
-    }, {
+    }, 
+    {
       "id": 43,
       "createBy": "admin",
       "createTime": "2018-12-27T02:57:29.000+0000",
@@ -201,7 +202,7 @@ export function findNavTree() {
         "lastUpdateTime": "2018-12-27T03:08:11.000+0000",
         "parentId": 44,
         "name": "注册中心",
-        "url": "http://139.196.87.48:8500",
+        "url": "http://www.baidu.com",
         "perms": "",
         "type": 1,
         "icon": " el-icon-view",
@@ -844,7 +845,7 @@ export function findMenuTree() {
         "lastUpdateTime": "2018-12-27T03:08:11.000+0000",
         "parentId": 44,
         "name": "注册中心",
-        "url": "http://139.196.87.48:8500",
+        "url": "http://www.baidu.com",
         "perms": "",
         "type": 1,
         "icon": " el-icon-view",

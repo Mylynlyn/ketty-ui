@@ -15,7 +15,7 @@ export default function $axios(options) {
       withCredentials: config.withCredentials
     })
 
-    // request 拦截器
+    // request 拦截器 这里是封装的拦截器
     instance.interceptors.request.use(
       config => {
         let token = Cookies.get('token')

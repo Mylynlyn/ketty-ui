@@ -9,6 +9,7 @@ import Generator from '@/views/Generator/Generator'
 import api from '@/http/api'
 import store from '@/store'
 import { getIFramePath, getIFrameUrl } from '@/utils/iframe'
+import Aviation from '@/views/Airport/Aviation'
 
 Vue.use(Router)
 
@@ -19,9 +20,9 @@ const router = new Router({
       name: '首页',
       component: Home,
       children: [
-        { 
-          path: '', 
-          name: '系统介绍', 
+        {
+          path: '',
+          name: '系统介绍',
           component: Intro,
           meta: {
             icon: 'fa fa-home fa-lg',
@@ -33,7 +34,7 @@ const router = new Router({
     {
       path: '/login',
       name: '登录',
-      component: Login
+      component: Aviation
     },
     {
       path: '/404',
@@ -55,7 +56,8 @@ router.beforeEach((to, from, next) => {
     } else {
       next()
     }
-  } else {
+  }
+  else {
     if (!token) {
       // 如果访问非登录界面，且户会话信息不存在，代表未登录，则跳转到登录界面
       next({ path: '/login' })

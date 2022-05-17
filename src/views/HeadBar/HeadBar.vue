@@ -1,5 +1,5 @@
-<template> 
-  <div class="headbar" :style="{'background':themeColor}" 
+<template>
+  <div class="headbar" :style="{'background':themeColor}"
     :class="$store.state.app.collapse?'position-collapse-left':'position-left'">
     <!-- 导航收缩 -->
     <span class="hamburg">
@@ -9,12 +9,12 @@
     </span>
     <!-- 导航菜单 -->
     <span class="navbar">
-      <el-menu :default-active="activeIndex" class="el-menu-demo" 
+      <el-menu :default-active="activeIndex" class="el-menu-demo"
           :background-color="themeColor" text-color="#fff" active-text-color="#ffd04b" mode="horizontal" @select="selectNavBar()">
         <el-menu-item index="1" @click="$router.push('/')"><i class="fa fa-home fa-lg"></i>  </el-menu-item>
-        <el-menu-item index="2" @click="openWindow('https://gitee.com/liuge1988/kitty')">{{$t("common.projectRepo")}}</el-menu-item>
+       <!-- <el-menu-item index="2" @click="openWindow('https://gitee.com/liuge1988/kitty')">{{$t("common.projectRepo")}}</el-menu-item>
         <el-menu-item index="3" @click="openWindow('https://gitee.com/liuge1988/kitty/wikis/Home')">{{$t("common.doc")}}</el-menu-item>
-        <el-menu-item index="4" @click="openWindow('https://www.cnblogs.com/xifengxiaoma/')">{{$t("common.blog")}}</el-menu-item>
+        <el-menu-item index="4" @click="openWindow('https://www.cnblogs.com/xifengxiaoma/')">{{$t("common.blog")}}</el-menu-item>-->
       </el-menu>
     </span>
     <!-- 工具栏 -->
