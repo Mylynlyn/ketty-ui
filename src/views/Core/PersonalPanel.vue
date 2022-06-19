@@ -2,49 +2,50 @@
   <div class="personal-panel">
     <div class="personal-desc" :style="{'background':this.$store.state.app.themeColor}">
         <div class="avatar-container">
-          <img class="avatar" :src="require('@/assets/user.png')" />
-        </div>  
+<!--          <img class="avatar" :src="require('@/assets/user.png')" />-->
+        </div>
         <div class="name-role">
-          <span class="sender">{{ user.name }} - {{ user.role }}</span>  
-        </div>  
-        <div class="registe-info">
-          <span class="registe-info">
-            <li class="fa fa-clock-o"></li>
-            {{ user.registeInfo }}
-          </span>
-        </div>  
+<!--          <span class="sender">{{ user.name }} - {{ user.role }}</span>-->
+          <span class="sender">{{ user.name }}</span>
+        </div>
+<!--        <div class="registe-info">-->
+<!--          <span class="registe-info">-->
+<!--            <li class="fa fa-clock-o"></li>-->
+<!--            {{ user.registeInfo }}-->
+<!--          </span>-->
+<!--        </div>-->
     </div>
-    <div class="personal-relation">
-        <span class="relation-item">followers</span>  
-        <span class="relation-item">watches</span>  
-        <span class="relation-item">friends</span>
-    </div>
-    <div class="main-operation">
-        <span class="main-operation-item">
-          <el-button size="small" icon="fa fa-male"> 个人中心</el-button>
-        </span>    
-        <span class="main-operation-item">
-          <el-button size="small" icon="fa fa-key"> 修改密码</el-button>
-        </span>    
-    </div>
-    <div class="other-operation">
-        <div class="other-operation-item">
-          <li class="fa fa-eraser"></li>
-          清除缓存
-        </div>    
-        <div class="other-operation-item">
-          <li class="fa fa-user"></li>
-          在线人数
-        </div>    
-        <div class="other-operation-item">
-          <li class="fa fa-bell"></li>
-          访问次数
-        </div>    
-        <div class="other-operation-item" @click="showBackupDialog">
-          <li class="fa fa-undo"></li>
-          {{$t("common.backupRestore")}}
-        </div>    
-    </div>
+<!--    <div class="personal-relation">-->
+<!--        <span class="relation-item">followers</span>-->
+<!--        <span class="relation-item">watches</span>-->
+<!--        <span class="relation-item">friends</span>-->
+<!--    </div>-->
+<!--    <div class="main-operation">-->
+<!--        <span class="main-operation-item">-->
+<!--          <el-button size="small" icon="fa fa-male"> 个人中心</el-button>-->
+<!--        </span>-->
+<!--        <span class="main-operation-item">-->
+<!--          <el-button size="small" icon="fa fa-key"> 修改密码</el-button>-->
+<!--        </span>-->
+<!--    </div>-->
+<!--    <div class="other-operation">-->
+<!--        <div class="other-operation-item">-->
+<!--          <li class="fa fa-eraser"></li>-->
+<!--          清除缓存-->
+<!--        </div>-->
+<!--        <div class="other-operation-item">-->
+<!--          <li class="fa fa-user"></li>-->
+<!--          在线人数-->
+<!--        </div>-->
+<!--        <div class="other-operation-item">-->
+<!--          <li class="fa fa-bell"></li>-->
+<!--          访问次数-->
+<!--        </div>-->
+<!--        <div class="other-operation-item" @click="showBackupDialog">-->
+<!--          <li class="fa fa-undo"></li>-->
+<!--          {{$t("common.backupRestore")}}-->
+<!--        </div>-->
+<!--    </div>-->
     <div class="personal-footer" @click="logout">
       <li class="fa fa-sign-out"></li>
       {{$t("common.logout")}}
@@ -84,7 +85,8 @@ export default {
         type: "warning"
       })
       .then(() => {
-        sessionStorage.removeItem("user")
+        // sessionStorage.removeItem("user")
+        // localStorage.removeItem("user")
         this.deleteCookie("token")
         this.$router.push("/login")
         this.$api.login.logout().then((res) => {
@@ -94,7 +96,7 @@ export default {
       .catch(() => {})
     },
     // 删除cookie
-    deleteCookie: function(name) { 
+    deleteCookie: function(name) {
         Cookies.remove(name)
     },
     // 打开备份还原界面
@@ -104,7 +106,8 @@ export default {
     // 成功还原之后，重新登录
     afterRestore: function() {
         this.$refs.backupDialog.setBackupVisible(false)
-        sessionStorage.removeItem("user")
+        // localStorage.removeItem("user")
+        // sessionStorage.removeItem("user")
         this.deleteCookie("token")
         this.$router.push("/login")
         this.$api.login.logout().then((res) => {

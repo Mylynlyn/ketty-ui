@@ -37,6 +37,9 @@ export default {
     return {
     }
   },
+    mounted(){
+        this.tabsCloseAllHandle ()
+    },
   computed: {
     mainTabs: {
       get () { return this.$store.state.tab.mainTabs },

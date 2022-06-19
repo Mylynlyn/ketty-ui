@@ -31,8 +31,8 @@
 			</el-form-item>
 		</el-form>
 		<!--表格显示列界面-->
-		<table-column-filter-dialog ref="tableColumnFilterDialog" :columns="columns" 
-			@handleFilterColumns="handleFilterColumns"> 
+		<table-column-filter-dialog ref="tableColumnFilterDialog" :columns="columns"
+			@handleFilterColumns="handleFilterColumns">
 		</table-column-filter-dialog>
 	</div>
 	<!--表格内容栏-->
@@ -54,11 +54,11 @@
 				<el-input v-model="dataForm.password" type="password" auto-complete="off"></el-input>
 			</el-form-item>
 			<el-form-item label="机构" prop="deptName">
-				<popup-tree-input 
-					:data="deptData" 
-					:props="deptTreeProps" 
-					:prop="dataForm.deptName" 
-					:nodeKey="''+dataForm.deptId" 
+				<popup-tree-input
+					:data="deptData"
+					:props="deptTreeProps"
+					:prop="dataForm.deptName"
+					:nodeKey="''+dataForm.deptId"
 					:currentChangeHandle="deptTreeCurrentChangeHandle">
 				</popup-tree-input>
 			</el-form-item>
@@ -68,7 +68,7 @@
 			<el-form-item label="手机" prop="mobile">
 				<el-input v-model="dataForm.mobile" auto-complete="off"></el-input>
 			</el-form-item>
-			<el-form-item label="角色" prop="userRoles" v-if="!operation">
+			<el-form-item label="角色" prop="userRoles">
 				<el-select v-model="dataForm.userRoles" multiple placeholder="请选择"
 					 style="width: 100%;">
 					<el-option v-for="item in roles" :key="item.id"
@@ -115,17 +115,31 @@ export default {
 			dataFormRules: {
 				name: [
 					{ required: true, message: '请输入用户名', trigger: 'blur' }
-				]
+				],
+          password: [
+              { required: true, message: '请输入密码', trigger: 'blur' }
+          ],
+          deptName: [
+              { required: true, message: '请选择机构', trigger: 'blur' }
+          ],
+          email: [
+              { required: true, message: '请输入邮箱', trigger: 'blur' }
+          ],
+          mobile: [
+              { required: true, message: '请输入手机号', trigger: 'blur' }
+          ],
+          userRoles: [
+              { required: true, message: '请选择用户角色', trigger: 'blur' }
+          ]
 			},
 			// 新增编辑界面数据
 			dataForm: {
-				id: 0,
 				name: '',
-				password: '123456',
+				password: '',
 				deptId: 1,
 				deptName: '',
-				email: 'test@qq.com',
-				mobile: '13889700023',
+				email: '',
+				mobile: '',
 				status: 1,
 				userRoles: []
 			},
@@ -145,6 +159,7 @@ export default {
 			}
 			this.pageRequest.columnFilters = {name: {name:'name', value:this.filters.name}}
 			this.$api.user.findPage(this.pageRequest).then((res) => {
+			    console.log(res)
 				this.pageResult = res.data
 				this.findUserRoles()
 			}).then(data!=null?data.callback:'')
@@ -152,8 +167,9 @@ export default {
 		// 加载用户角色信息
 		findUserRoles: function () {
 			this.$api.role.findAll().then((res) => {
+			    console.log(res)
 				// 加载角色集合
-				this.roles = res.data	
+				this.roles = res.data
 			})
 		},
 		// 批量删除
@@ -170,8 +186,8 @@ export default {
 				password: '',
 				deptId: 1,
 				deptName: '',
-				email: 'test@qq.com',
-				mobile: '13889700023',
+				email: '',
+				mobile: '',
 				status: 1,
 				userRoles: []
 			}
@@ -188,14 +204,14 @@ export default {
 			this.dataForm.userRoles = userRoles
 		},
 		// 编辑
-		submitForm: function () {
+		submitForm: function () {// todo
 			this.$refs.dataForm.validate((valid) => {
 				if (valid) {
 					this.$confirm('确认提交吗？', '提示', {}).then(() => {
 						this.editLoading = true
 						let params = Object.assign({}, this.dataForm)
 						let userRoles = []
-						for(let i=0,len=params.userRoles.length; i<len; i++) {
+						for(let i=0;i<params.userRoles.length; i++) {
 							let userRole = {
 								userId: params.id,
 								roleId: params.userRoles[i]
@@ -203,6 +219,7 @@ export default {
 							userRoles.push(userRole)
 						}
 						params.userRoles = userRoles
+              console.log(params)
 						this.$api.user.save(params).then((res) => {
 							this.editLoading = false
 							if(res.code == 200) {

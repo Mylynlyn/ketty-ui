@@ -37,9 +37,9 @@
   "resolved" "https://registry.npmjs.org/ajv-keywords/-/ajv-keywords-3.2.0.tgz"
   "version" "3.2.0"
 
-"ajv@^5.0.0", "ajv@^6.0.0":
-  "integrity" "sha1-c7Xuyj+rZT49P5Qis0GtQiBdyWU="
-  "resolved" "https://registry.npmjs.org/ajv/-/ajv-5.5.2.tgz"
+"ajv@^5.0.0":
+  "integrity" "sha512-Ajr4IcMXq/2QmMkEmSvxqfLN5zGmJ92gHXAeOXq1OekoH2rfDNsgdDoL2f7QaRCy7G/E6TpxBVdRuNraMztGHw=="
+  "resolved" "https://registry.npmmirror.com/ajv/-/ajv-5.5.2.tgz"
   "version" "5.5.2"
   dependencies:
     "co" "^4.6.0"
@@ -47,17 +47,7 @@
     "fast-json-stable-stringify" "^2.0.0"
     "json-schema-traverse" "^0.3.0"
 
-"ajv@^6.1.0":
-  "integrity" "sha512-LqZ9wY+fx3UMiiPd741yB2pj3hhil+hQc8taf4o2QGRFpWgZ2V5C8HA165DY9sS3fJwsk7uT7ZlFEyC3Ig3lLg=="
-  "resolved" "https://registry.npmjs.org/ajv/-/ajv-6.5.3.tgz"
-  "version" "6.5.3"
-  dependencies:
-    "fast-deep-equal" "^2.0.1"
-    "fast-json-stable-stringify" "^2.0.0"
-    "json-schema-traverse" "^0.4.1"
-    "uri-js" "^4.2.2"
-
-"ajv@^6.12.3":
+"ajv@^6.0.0", "ajv@^6.1.0", "ajv@^6.12.3":
   "integrity" "sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g=="
   "resolved" "https://registry.npmmirror.com/ajv/-/ajv-6.12.6.tgz"
   "version" "6.12.6"
@@ -1644,8 +1634,8 @@
   "version" "1.0.4"
 
 "co@^4.6.0":
-  "integrity" "sha1-bqa989hTrlTMuOR7+gvz+QMfsYQ="
-  "resolved" "https://registry.npmjs.org/co/-/co-4.6.0.tgz"
+  "integrity" "sha512-QVb0dM5HvG+uaxitm8wONl7jltx8dqhfU33DcqtOZcLSVIKSDDLDi7+0LbAKiyI8hD9u42m2YxXSkMGWThaecQ=="
+  "resolved" "https://registry.npmmirror.com/co/-/co-4.6.0.tgz"
   "version" "4.6.0"
 
 "coa@~1.0.1":
@@ -2852,14 +2842,9 @@
     "time-stamp" "^1.0.0"
 
 "fast-deep-equal@^1.0.0":
-  "integrity" "sha1-wFNHeBfIa1HaqFPIHgWbcz0CNhQ="
-  "resolved" "https://registry.npmjs.org/fast-deep-equal/-/fast-deep-equal-1.1.0.tgz"
+  "integrity" "sha512-fueX787WZKCV0Is4/T2cyAdM4+x1S3MXXOAhavE1ys/W42SHAPacLTQhucja22QBYrfGw50M2sRiXPtTGv9Ymw=="
+  "resolved" "https://registry.npmmirror.com/fast-deep-equal/-/fast-deep-equal-1.1.0.tgz"
   "version" "1.1.0"
-
-"fast-deep-equal@^2.0.1":
-  "integrity" "sha1-ewUhjd+WZ79/Nwv3/bLLFf3Qqkk="
-  "resolved" "https://registry.npmjs.org/fast-deep-equal/-/fast-deep-equal-2.0.1.tgz"
-  "version" "2.0.1"
 
 "fast-deep-equal@^3.1.1":
   "integrity" "sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q=="
@@ -4331,13 +4316,13 @@
   "version" "1.0.2"
 
 "json-schema-traverse@^0.3.0":
-  "integrity" "sha1-NJptRMU6Ud6JtAgFxdXlm0F9M0A="
-  "resolved" "https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-0.3.1.tgz"
+  "integrity" "sha512-4JD/Ivzg7PoW8NzdrBSr3UFwC9mHgvI7Z6z3QGBsSHgKaRTUDmyZAAKJo2UbG1kUVfS9WS8bi36N49U1xw43DA=="
+  "resolved" "https://registry.npmmirror.com/json-schema-traverse/-/json-schema-traverse-0.3.1.tgz"
   "version" "0.3.1"
 
 "json-schema-traverse@^0.4.1":
   "integrity" "sha512-xbbCH5dCYU5T8LcEhhuh7HJ88HXuW3qsI3Y0zOZFKfZEHcpWiHU/Jxzk629Brsab/mMiHQti9wMP+845RPe3Vg=="
-  "resolved" "https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-0.4.1.tgz"
+  "resolved" "https://registry.npmmirror.com/json-schema-traverse/-/json-schema-traverse-0.4.1.tgz"
   "version" "0.4.1"
 
 "json-schema@0.4.0":
@@ -5219,7 +5204,7 @@
     "shellwords" "^0.1.1"
     "which" "^1.3.0"
 
-"node-sass@^4.8.3", "node-sass@^4.9.3":
+"node-sass@^4.14.1", "node-sass@^4.8.3":
   "integrity" "sha512-sjCuOlvGyCJS40R8BscF5vhVlQjNN069NtQ1gSxyK1u9iqvn6tf7O1R4GNowVZfiZUCRt5MmMs1xd+4V/7Yr0g=="
   "resolved" "https://registry.npmmirror.com/node-sass/-/node-sass-4.14.1.tgz"
   "version" "4.14.1"
@@ -6888,7 +6873,7 @@
     "scss-tokenizer" "^0.2.3"
     "yargs" "^13.3.2"
 
-"sass-loader@^7.1.0":
+"sass-loader@^7.3.1":
   "integrity" "sha512-tuU7+zm0pTCynKYHpdqaPpe+MMTQ76I9TPZ7i4/5dZsigE350shQWe5EZNl5dBidM49TPET75tNqRbcsUZWeNA=="
   "resolved" "https://registry.npmmirror.com/sass-loader/-/sass-loader-7.3.1.tgz"
   "version" "7.3.1"
@@ -8065,6 +8050,13 @@
     "vue-style-loader" "^3.0.0"
     "vue-template-es2015-compiler" "^1.6.0"
 
+"vue-print-nb@^1.7.5":
+  "integrity" "sha512-iNbNyUVRWz0Ha1UTiCKxMPtHLUDGgNI8e8xmD3xqm9RlXIUeX9bT7DgNAfY8vPzqyFRHqGjxLI1rycKH366ziQ=="
+  "resolved" "https://registry.npmmirror.com/vue-print-nb/-/vue-print-nb-1.7.5.tgz"
+  "version" "1.7.5"
+  dependencies:
+    "vue" "^2.6.11"
+
 "vue-router@^3.0.1":
   "integrity" "sha512-vLLoY452L+JBpALMP5UHum9+7nzR9PeIBCghU9ZtJ1eWm6ieUI8Zb/DI3MYxH32bxkjzYV1LRjNv4qr8d+uX/w=="
   "resolved" "https://registry.npmjs.org/vue-router/-/vue-router-3.0.1.tgz"
@@ -8091,10 +8083,10 @@
   "resolved" "https://registry.npmjs.org/vue-template-es2015-compiler/-/vue-template-es2015-compiler-1.6.0.tgz"
   "version" "1.6.0"
 
-"vue@^2.0.0", "vue@^2.5.17", "vue@^2.5.2":
-  "integrity" "sha512-mFbcWoDIJi0w0Za4emyLiW72Jae0yjANHbCVquMKijcavBGypqlF7zHRgMa5k4sesdv7hv2rB4JPdZfR+TPfhQ=="
-  "resolved" "https://registry.npmjs.org/vue/-/vue-2.5.17.tgz"
-  "version" "2.5.17"
+"vue@^2.0.0", "vue@^2.5.17", "vue@^2.5.2", "vue@^2.6.11":
+  "integrity" "sha512-x2284lgYvjOMj3Za7kqzRcUSxBboHqtgRE2zlos1qWaOye5yUmHn42LB1250NJBLRwEcdrB0JRwyPTEPhfQjiQ=="
+  "resolved" "https://registry.npmmirror.com/vue/-/vue-2.6.14.tgz"
+  "version" "2.6.14"
 
 "vuex@^3.0.1":
   "integrity" "sha512-ETW44IqCgBpVomy520DT5jf8n0zoCac+sxWnn+hMe/CzaSejb/eVw2YToiXYX+Ex/AuHHia28vWTq4goAexFbw=="
