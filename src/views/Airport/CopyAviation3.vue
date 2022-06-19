@@ -606,7 +606,7 @@
                         ]
                     }
                 ],
-                chargeOptions: [// todo 参数变了
+                chargeOptions: [
                     {label: '航空费用', prop: 'weightallcharges', disable: true},
                     {label: '其他费用', prop: 'otherallcharges', disable: false},
                     {label: '总额', prop: 'total', disable: true},

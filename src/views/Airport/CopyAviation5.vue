@@ -778,7 +778,7 @@
                     }
                 })
             },
-            changeDeliveryStation(val) {//改变交货运站--影响第一承运，获取货物信息表--通过航司筛选（涉及费率） todo
+            changeDeliveryStation(val) {//改变交货运站--影响第一承运，获取货物信息表--通过航司筛选（涉及费率）
                 console.log(val[0])
                 if (val[0] == '东航') {
                     this.addForm.firstcarrier = 'MU'
@@ -937,7 +937,7 @@
                 this.addForm = row
                 this.permVisible = "invalid"
             },
-            operateUsedDetail(index,row){//对于已使用单号的权限操作 todo
+            operateUsedDetail(index,row){//对于已使用单号的权限操作
                 // if(row.status==1){//编辑
                 this.editUsedDetail(index,row)
                 // }else{// 申请&审核
@@ -952,7 +952,7 @@
                 //     })
                 // }
             },
-            editUsedDetail(index, row) {  //修改已使用单号 todo 需要测试 需要调初始加载项
+            editUsedDetail(index, row) {  //修改已使用单号
                 console.log(row)
                 this.permVisible = "valid"
                 this.typeVisible = 'edit'
@@ -992,7 +992,7 @@
                     if (res.code == 200) {
                         if (res.data != null) {
                             this.addForm = res.data
-                            this.cargoTableData=res.data.cargoTable// todo to-test
+                            this.cargoTableData=res.data.cargoTable
                         }
                     } else {
                         this.$message.error("获取暂存数据失败！")

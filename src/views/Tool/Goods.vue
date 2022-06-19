@@ -41,6 +41,13 @@
     </div>
     <el-dialog :visible.sync="dialogVisible" :title="dialogTitle" width="30%" class="dialogStyle">
       <el-form :model="dataForm" ref="dataForm" :rules="dataFormRules" label-width="80px" :size="size">
+        <el-form-item label="航班" prop="airfight">
+          <el-select v-model="dataForm.airfight" style="width:100%">
+            <template v-for="item in airflightCompanyOptions">
+              <el-option :label="item.label" :value="item.label"></el-option>
+            </template>
+          </el-select>
+        </el-form-item>
         <template v-for="item in formHeaders">
           <el-form-item :label="item.label" :prop="item.prop">
             <el-input v-model="dataForm[item.prop]"></el-input>
@@ -77,7 +84,7 @@
                 pageSize:10,
                 total:0,
                 formHeaders:[
-                    {label:'航班',prop:'airfight'},
+                    // {label:'航班',prop:'airfight'},
                     {label:'商品种类',prop:'goodtype'},
                     {label:'商品代码',prop:'goodnum'}
                 ],
@@ -92,7 +99,11 @@
                     airfight:[{required:true,message:"请输入航班",trigger:'blur'}],
                     goodtype:[{required:true,message:"请输入商品种类",trigger:'blur'}],
                     goodnum:[{required:true,message:"请输入商品代码",trigger:'blur'}]
-                }
+                },
+                airflightCompanyOptions:[
+                    {label:'东航'},
+                    {label:'南航'}
+                ]
             }
         },
         mounted(){

@@ -154,7 +154,7 @@
             returnIndex(val) {
                 return (this.currentPage - 1) * this.pageSize + val + 1
             },
-            addInfo() {// todo
+            addInfo() {
                 this.dataForm={}
                 this.dialogTitle = '新增'
                 this.dialogVisible = true
@@ -207,7 +207,7 @@
                     }
                 })
             },
-            changeType(val){// todo
+            changeType(val){
                 console.log(val)
                 if(val==1){
                     this.getSendNameOptions()
@@ -230,7 +230,7 @@
                     }
                 })
             },
-            getGoodTypeOptions() {// todo
+            getGoodTypeOptions() {
                 this.$api.goods.getInfos({
                     columnFilters: {keywords: {name: 'keywords', value: ''}},
                     pageSize: 0,

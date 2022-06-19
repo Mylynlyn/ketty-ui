@@ -812,7 +812,7 @@
             },
             fileSuccess(res, file, fileList) {
                 this.$message.success("文件上传成功");
-                console.log(res)// todo
+                console.log(res)
                 this.activeName='not_used'
                 this.refreshData('not_used')
             },

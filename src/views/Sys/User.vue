@@ -204,7 +204,7 @@ export default {
 			this.dataForm.userRoles = userRoles
 		},
 		// 编辑
-		submitForm: function () {// todo
+		submitForm: function () {
 			this.$refs.dataForm.validate((valid) => {
 				if (valid) {
 					this.$confirm('确认提交吗？', '提示', {}).then(() => {
