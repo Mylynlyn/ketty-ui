@@ -42,7 +42,6 @@
           action='http://39.105.37.45:8001/tAviationnum/importExcel'
           :headers="headers"
           :file-list="fileList"
-          :limit="1"
           :on-success="fileSuccess"
           :on-error="fileError"
           :on-exceed="handleExceed"
@@ -313,7 +312,7 @@
             </el-table-column>
             <el-table-column label="计费重量" prop="weightall" align="center">
               <template slot-scope="scope">
-                <span>{{scope.row.weightall}}</span>
+                <span>{{addForm.weightall}}</span>
               </template>
             </el-table-column>
             <el-table-column label="费率" prop="rate" align="center">
@@ -468,7 +467,7 @@
       <span slot="footer" class="dialog-footer">
           <el-button @click.native="singleDialogVisible = false">{{$t('action.cancel')}}</el-button>
           <el-button type="primary" @click.native="submitSingleForm"
-                     :loading="editLoading">{{$t('action.submit')}}</el-button>
+                     >{{$t('action.submit')}}</el-button>
         </span>
     </el-dialog>
   </div>
@@ -533,7 +532,6 @@
                     {prop: "aviationnum", label: "未使用单号"}
                 ],
                 dialogVisible: false,
-                editLoading: false,
                 dataFormRules: {
                     aviationnum: [{required: true, message: "请输入单号", trigger: "blur"}]
                 },
@@ -1168,12 +1166,10 @@
                 this.$refs.dataForm.validate((valid) => {
                     if (valid) {
                         this.$confirm('确认提交吗？', '提示', {}).then(() => {
-                            this.editLoading = true
                             let params = Object.assign({}, this.dataForm)
                             this.$api.tAviationnum.save(params).then((res) => {
                                 if (res.code == 200) {
                                     this.$message({message: '操作成功', type: 'success'})
-                                    this.editLoading = false
                                     this.$refs['dataForm'].resetFields()
                                     this.singleDialogVisible = false
                                     this.activeName = 'not_used'
@@ -1270,7 +1266,7 @@
                 handler(newarr, oldarr) { //
                     this.addForm.rcpall = 0;//记录总件数
                     this.addForm.weightcharge = 0;//记录总航空费用
-                    this.addForm.weightall = '';//记录总计费重量
+                    this.addForm.weightall = 0;//记录计费重量
                     var weight_num = 0
                     for (let i = 0; i < this.cargoTableData.length; i++) {
                         this.cargoTableData[i].rate = this.cargoTableData[0].rate
@@ -1278,21 +1274,22 @@
                         if (isNaN(this.cargoTableData[i].tiji)) {
                             this.cargoTableData[i].chargeweight = 0
                         } else {
-                            this.cargoTableData[i].chargeweight = Number(this.cargoTableData[i].tiji / 6000).toFixed(2)//单个计费重量
+                            this.cargoTableData[i].chargeweight = Number(this.cargoTableData[i].tiji / 6000).toFixed(2)//单个泡重
                         }
-                        weight_num += Number(this.cargoTableData[i].chargeweight)//计算总的计费重量
+                        weight_num += Number(this.cargoTableData[i].chargeweight)//计算总的泡重
                         this.addForm.rcpall += Number(this.cargoTableData[i].rcp)
                         this.addForm.total = Number(this.addForm.otherallcharges) + Number(this.addForm.weightcharge)
                         if (i > 0) {
-                            this.cargoTableData[i].grossall = this.cargoTableData[0].grossall//记录每条数据的总毛重
+                            this.cargoTableData[i].grossall = this.cargoTableData[0].grossall//给每条数据记录总毛重
                         }
                     }
-                    for (let i = 0; i < this.cargoTableData.length; i++) {//记录每条数据的总计费重量，计算总航空费用，记录每条数据的总航空费用
-                        this.cargoTableData[i].weightall = weight_num//
-                        this.addForm.weightcharge = Number(this.cargoTableData[0].weightall) > Number(this.cargoTableData[0].grossall) ? Number(this.cargoTableData[0].weightall * this.finalRatio).toFixed(2) : Number(this.cargoTableData[0].grossall * this.finalRatio).toFixed(2)
+                   for (let i = 0; i < this.cargoTableData.length; i++) {//记录每条数据的泡重，计算总航空费用，给每条数据记录总航空费用
+                       this.addForm.weightall = Number(weight_num)>Number(this.cargoTableData[0].grossall)?Number(weight_num):Number(this.cargoTableData[0].grossall)
+                       this.cargoTableData[i].weightall = weight_num //泡重
+                        this.addForm.weightcharge = Number(this.addForm.weightall * this.finalRatio).toFixed(2)
                         this.cargoTableData[i].airfreightall = this.addForm.weightcharge
                     }
-                    this.addForm.weightall = weight_num
+
                 },
                 immediate: true,
                 deep: true
@@ -1327,7 +1324,7 @@
                                     this.cargoTableData[i].rate = res.data[0].ratio
                                 }
                                 this.finalRatio = res.data[0].ratio
-                                this.addForm.weightcharge = Number(this.cargoTableData[0].weightall) > Number(this.cargoTableData[0].grossall) ? Number(this.cargoTableData[0].weightall * this.finalRatio).toFixed(2) : Number(this.cargoTableData[0].grossall * this.finalRatio).toFixed(2)
+                                this.addForm.weightcharge = Number(this.addForm.weightall * this.finalRatio).toFixed(2)
                                 for (let i = 0; i < this.cargoTableData.length; i++) {//费率变化--航空运费改变
                                     this.cargoTableData[i].airfreightall = this.addForm.weightcharge
                                 }
