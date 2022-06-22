@@ -64,8 +64,8 @@
             <el-button type="text" icon="el-icon-edit" @click="operateUsedDetail(scope.$index,scope.row)"
                        :size="tableSize">
               <span v-if="scope.row.status=='-1'">申请</span>
-              <span v-else-if="scope.row.status=='0'&&currentRole.indexOf('管理员')>-1">待审核</span>
-              <span v-else-if="scope.row.status=='0'&&currentRole.indexOf('管理员')==-1">审核中</span>
+              <span v-else-if="scope.row.status=='0'&&(currentRole.indexOf('管理员')>-1||currentRole.indexOf('总经理')>-1)">待审核</span>
+              <span v-else-if="scope.row.status=='0'&&(currentRole.indexOf('管理员')==-1||currentRole.indexOf('总经理')==-1)">审核中</span>
               <span v-else>编辑</span>
             </el-button>
           </template>
@@ -986,7 +986,7 @@
 
             },
             operateUsedDetail(index, row) {//对于已使用单号的权限操作
-                if (row.status == '0' && this.currentRole.indexOf("管理员") > -1) {
+                if (row.status == '0' && (this.currentRole.indexOf("管理员") > -1|| this.currentRole.indexOf('总经理')>-1)) {
                     this.$confirm(row.lastupdateby + '申请编辑权限', '提示', {
                         confirmButtonText: '同意',
                         cancelButtonText: '取消',
@@ -1235,7 +1235,7 @@
                 })
             },
             fileSuccess(res, file, fileList) {
-                this.$message.success("文件上传成功");
+                this.$message.success("")
                 this.activeName = 'not_used'
                 this.refreshData('not_used')
             },
