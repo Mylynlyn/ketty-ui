@@ -11,9 +11,24 @@
         <el-form-item>
           <kt-button icon="fa fa-plus" :label="$t('action.add')" perms="data:good:add" type="primary" @click="addInfo"></kt-button>
         </el-form-item>
+        <el-form-item>
+          <el-upload accept=".xls, .xlsx"
+                     action='http://39.105.37.45:8001/goodnum/importExcel'
+                     :headers="uploadHeaders"
+                     :file-list="fileList"
+                     :on-success="fileSuccess"
+                     :on-error="fileError"
+                     :show-file-list="false" >
+            <kt-button icon="fa fa-cloud-upload" label="批量导入" perms="data:good:upload" type="primary"></kt-button>
+          </el-upload>
+        </el-form-item>
+        <el-form-item>
+          <kt-button icon="fa fa-download" label="下载模板" perms="data:good:download" type="text"
+                     @click="downloadTemplate"></kt-button>
+        </el-form-item>
       </el-form>
     </div>
-    <el-table :data="tableData" :size="size" :cell-style="{padding:'3px 0'}" :header-cell-style="{background:'#EEEEEE',color:'#606266'}">
+    <el-table :data="tableData" :size="size" :cell-style="{padding:'3px 0'}" :header-cell-style="{background:'#EEEEEE',color:'#606266'}" max-height="480">
       <el-table-column type="index" :index="returnIndex" label="序号" width="80"></el-table-column>
       <template v-for="item in headers">
         <el-table-column :label="item.label" :prop="item.prop">
@@ -33,7 +48,7 @@
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
         :current-page="currentPage"
-        :page-sizes="[10, 20, 30]"
+        :page-sizes="[10, 20, 30, 50]"
         :page-size="pageSize"
         layout="total, sizes, prev, pager, next"
         :total="total">
@@ -103,7 +118,9 @@
                 airflightCompanyOptions:[
                     {label:'东航'},
                     {label:'南航'}
-                ]
+                ],
+                uploadHeaders: {token: Cookies.get('token')},
+                fileList: []
             }
         },
         mounted(){
@@ -191,7 +208,19 @@
                         })
                     }
                 })
+            },
+            downloadTemplate(){
+                const url=`http://39.105.37.45:8001/goodnum/download?token=${this.uploadHeaders.token}`
+                window.location.href=url
+            },
+            fileSuccess(res, file, fileList) {
+                this.$message.success("文件上传成功")
+                this.returnList()
+            },
+            fileError(err, file, fileList) {
+                this.$message.error("文件上传失败");
             }
+
         }
     }
 </script>

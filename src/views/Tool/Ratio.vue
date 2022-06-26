@@ -13,15 +13,36 @@
           <kt-button icon="fa fa-plus" :label="$t('action.add')" perms="data:ratio:add" type="primary"
                      @click="addInfo"></kt-button>
         </el-form-item>
+        <el-form-item>
+          <el-upload accept=".xls, .xlsx"
+                     action='http://39.105.37.45:8001/tGoodallratio/importExcel'
+                     :headers="uploadHeaders"
+                     :file-list="fileList"
+                     :on-success="fileSuccess"
+                     :on-error="fileError"
+                     :show-file-list="false">
+            <kt-button icon="fa fa-cloud-upload" label="批量导入" perms="data:ratio:upload" type="primary"></kt-button>
+          </el-upload>
+        </el-form-item>
+        <el-form-item>
+          <kt-button icon="fa fa-download" label="下载模板" perms="data:ratio:download" type="text"
+                     @click="downloadTemplate"></kt-button>
+        </el-form-item>
       </el-form>
     </div>
-    <el-table :data="tableData" :size="size" :cell-style="{padding:'3px 0'}"
+    <el-table :data="tableData" :size="size" :cell-style="{padding:'3px 0'}" max-height="480"
               :header-cell-style="{background:'#EEEEEE',color:'#606266'}">
-      <el-table-column type="index" :index="returnIndex" label="序号" width="80"></el-table-column>
+      <el-table-column type="index" :index="returnIndex" label="序号" width="60px"></el-table-column>
       <template v-for="item in headers">
-        <el-table-column :label="item.label" :prop="item.prop">
+        <el-table-column :label="item.label" :prop="item.prop" :width="item.width" show-overflow-tooltip>
         </el-table-column>
       </template>
+      <el-table-column label="重量等级" prop="weightclass" width="150px">
+        <template slot-scope="scope">
+          {{returnWeightClass(scope.row.weightclass)}}
+        </template>
+      </el-table-column>
+      <el-table-column label="费率" prop="ratio" width="80px"></el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
           <kt-button type="text" :size="size" icon="el-icon-edit" @click="editInfo(scope.$index,scope.row)"
@@ -38,7 +59,7 @@
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
         :current-page="currentPage"
-        :page-sizes="[10, 20, 30]"
+        :page-sizes="[10, 20, 30, 50]"
         :page-size="pageSize"
         layout="total, sizes, prev, pager, next"
         :total="total">
@@ -75,9 +96,16 @@
           </el-select>
         </el-form-item>
         <el-form-item label="货物类型" prop="rateclass">
-          <el-select v-model="dataForm.rateclass" style="width:100%" @change="changeRateClass">
+          <el-select v-model="dataForm.rateclass" style="width:100%">
             <template v-for="item in goodTypeOptions">
               <el-option :label="item.goodtype" :value="item.goodtype"></el-option>
+            </template>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="重量等级" prop="weightclass">
+          <el-select v-model="dataForm.weightclass" style="width:100%">
+            <template v-for="item in weightOptions">
+              <el-option :label="item.weightclass" :value="item.value"></el-option>
             </template>
           </el-select>
         </el-form-item>
@@ -108,12 +136,13 @@
                 keywords: '',
                 tableData: [],
                 headers: [
-                    {label: '航空公司', prop: 'station'},
+                    {label: '航空公司', prop: 'station', width: '100px'},
                     {label: '目的站', prop: 'destination'},
                     {label: '航班号', prop: 'flightnum'},
                     {label: '托运人', prop: 'sendname'},
-                    {label: '货物类型', prop: 'rateclass'},
-                    {label: '费率', prop: 'ratio'}
+                    {label: '货物类型', prop: 'rateclass', width: '120px'},
+                    // {label: '重量等级', prop: 'weightclass'},
+                    // {label: '费率', prop: 'ratio',width:'100px'}
                 ],
                 currentPage: 1,
                 pageSize: 10,
@@ -121,14 +150,14 @@
                 dialogVisible: false,
                 dialogTitle: '',
                 dataForm: {
-                    station:'',
-                    destination:'',
-                    flightnum:'',
-                    flightNumArray:[],
-                    sendname:'',
-                    sendNameArray:[],
-                    rateclass:'',
-                    ratio:''
+                    station: '',
+                    destination: '',
+                    flightnum: '',
+                    flightNumArray: [],
+                    sendname: '',
+                    sendNameArray: [],
+                    rateclass: '',
+                    ratio: ''
                 },
                 dataFormRules: {
                     station: [{required: true, message: "请选择航空公司", trigger: 'blur'}],
@@ -136,16 +165,29 @@
                     flightNumArray: [{required: true, message: "请选择航班号", trigger: 'blur'}],
                     sendNameArray: [{required: true, message: "请选择托运人", trigger: 'blur'}],
                     rateclass: [{required: true, message: "请选择货物类型", trigger: 'blur'}],
+                    weightclass: [{required: true, message: "请选择重量等级", trigger: 'blur'}],
                     ratio: [{required: true, message: "请输入费率", trigger: 'blur'}]
                 },
                 flightCompanyOptions: [
                     {label: '东航', value: '东航'},
                     {label: '南航', value: '南航'}
                 ],
-                sendNameOptions:[],// 托运人列表
-                destinationOptions:[],//目的站列表
-                flightNumOptions:[],//航班号列表
-                goodTypeOptions:[]// 货物类型列表
+                sendNameOptions: [],// 托运人列表
+                destinationOptions: [],//目的站列表
+                flightNumOptions: [],//航班号列表
+                goodTypeOptions: [],// 货物类型列表
+                weightOptions: [//重量等级列表
+                    {weightclass: "N(1-44)", value: '1-44'},
+                    {weightclass: "45(45-99)", value: '45-99'},
+                    {weightclass: "100(100-299)", value: '100-299'},
+                    {weightclass: "300(300-499)", value: '300-499'},
+                    {weightclass: "500(500-999)", value: '500-999'},
+                    {weightclass: "1000(1000-1999)", value: '1000-1999'},
+                    {weightclass: "2000(2000-2999)", value: '2000-2999'},
+                    {weightclass: "3000(3000及以上)", value: '3000-99999'}
+                ],
+                uploadHeaders: {token: Cookies.get('token')},
+                fileList: []
             }
         },
         mounted() {
@@ -190,9 +232,9 @@
             },
             editInfo(index, row) {
                 this.getSendNameOptions()
-                row.flightNumArray=row.flightnum.split(',')
-                row.sendNameArray=row.sendname.split(',')
-                this.dataForm = Object.assign({},row)
+                row.flightNumArray = row.flightnum.split(',')
+                row.sendNameArray = row.sendname.split(',')
+                this.dataForm = Object.assign({}, row)
                 this.dialogTitle = '编辑'
                 this.dialogVisible = true
             },
@@ -218,8 +260,8 @@
                 } else {
                     this.dataForm.lastupdateby = user
                 }
-                this.dataForm.flightnum=this.dataForm.flightNumArray.join(',')
-                this.dataForm.sendname=this.dataForm.sendNameArray.join(',')
+                this.dataForm.flightnum = this.dataForm.flightNumArray.join(',')
+                this.dataForm.sendname = this.dataForm.sendNameArray.join(',')
                 console.log(this.dataForm)
                 this.$refs[val].validate((valid) => {
                     const that = this
@@ -236,7 +278,7 @@
                 })
             },
             getSendNameOptions() {
-                this.sendNameOptions=[]
+                this.sendNameOptions = []
                 this.$api.send.getInfos({
                     columnFilters: {keywords: {name: 'keywords', value: ''}},
                     pageSize: 0,
@@ -244,29 +286,29 @@
                 }).then(res => {
                     console.log(res)
                     if (res.code == 200) {
-                        this.sendNameOptions=[]
-                            this.sendNameOptions=res.data.content
+                        this.sendNameOptions = []
+                        this.sendNameOptions = res.data.content
                     }
                 })
             },
-            changeFlightCompany(val){// 改变航空公司获取目的站列表和货物类型列表
-                this.flightNumOptions=[]
-                this.dataForm.flightNumArray=[]
-                this.dataForm.destination=''
-                this.dataForm.rateclass=''
-                this.goodTypeOptions=[]
+            changeFlightCompany(val) {// 改变航空公司获取目的站列表和货物类型列表
+                this.flightNumOptions = []
+                this.dataForm.flightNumArray = []
+                this.dataForm.destination = ''
+                this.dataForm.rateclass = ''
+                this.goodTypeOptions = []
                 console.log(val)
                 this.$api.flight.returnStationList({
-                    flightName:val,
-                    executiontNum:null
-                }).then(res=>{
+                    flightName: val,
+                    executiontNum: null
+                }).then(res => {
                     console.log(res)
-                    if(res.code==200){
-                        this.destinationOptions=res.data
+                    if (res.code == 200) {
+                        this.destinationOptions = res.data
                     }
                 })
                 this.$api.goods.searchGoods({
-                    airFight:val
+                    airFight: val
                 }).then(res => {
                     console.log(res)
                     if (res.code == 200) {
@@ -274,21 +316,43 @@
                     }
                 })
             },
-            changeDestination(val){// 改变目的站获取航班号列表
-                this.dataForm.flightNumArray=[]
+            changeDestination(val) {// 改变目的站获取航班号列表
+                this.dataForm.flightNumArray = []
                 console.log(val)
                 this.$api.flight.returnStationList({
-                    flightName:this.dataForm.station,
-                    executiontNum:val
-                }).then(res=>{
+                    flightName: this.dataForm.station,
+                    executiontNum: val
+                }).then(res => {
                     console.log(res)
-                    if(res.code==200){
-                        this.flightNumOptions=res.data
+                    if (res.code == 200) {
+                        this.flightNumOptions = res.data
                     }
                 })
             },
-            changeRateClass(val){
-                console.log(val)
+            downloadTemplate() {
+                const url = `http://39.105.37.45:8001/tGoodallratio/download?token=${this.uploadHeaders.token}`
+                window.location.href = url
+            },
+            fileSuccess(res, file, fileList) {
+                this.$message.success("文件上传成功")
+                this.returnList()
+            },
+            fileError(err, file, fileList) {
+                this.$message.error("文件上传失败");
+            },
+            returnWeightClass(val) {
+                if (val != undefined) {
+                    const array = val.split('-')
+                    if (array[0] == '1') {
+                        return "N(" + val + ")"
+                    } else if (array[0] == '3000') {
+                        return "3000(3000及以上)"
+                    } else {
+                        return array[0] + '(' + val + ')'
+                    }
+                } else {
+                    return ""
+                }
             }
 
         }

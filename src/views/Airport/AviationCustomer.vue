@@ -57,14 +57,11 @@
                 :header-cell-style="{background:'#EEEEEE',color:'#606266'}">
         <el-table-column type="index" :index="returnUsedIndex" label="序号"></el-table-column>
         <template v-for="item in usedHeaders">
-          <el-table-column :label="item.label" :prop="item.prop" :width="item.width"></el-table-column>
+          <el-table-column :label="item.label" :prop="item.prop"></el-table-column>
         </template>
         <el-table-column label="操作">
           <template slot-scope="scope">
-            <el-button type="text" icon="el-icon-view" @click="viewUsedDetail(scope.$index,scope.row)"
-                       :size="tableSize" perms="air:num:view">查看
-            </el-button>
-            <el-button type="text" icon="el-icon-edit" @click="operateFormDetail(scope.$index,scope.row)"
+            <el-button type="text" icon="el-icon-edit" @click="operateUsedDetail(scope.$index,scope.row)"
                        :size="tableSize">
               <span v-if="scope.row.status=='-1'">申请</span>
               <span v-else-if="scope.row.status=='0'&&(currentRole.indexOf('管理员')>-1||currentRole.indexOf('总经理')>-1)">待审核</span>
@@ -96,13 +93,6 @@
           <template slot-scope="scope">
             <el-button type="text" icon="el-icon-view" @click="viewInvalidDetail(scope.$index,scope.row)"
                        :size="tableSize" perms="air:num:view">查看
-            </el-button>
-            <el-button type="text" icon="el-icon-edit" @click="operateFormDetail(scope.$index,scope.row)"
-                       :size="tableSize">
-              <span v-if="scope.row.status=='-1'">申请</span>
-              <span v-else-if="scope.row.status=='0'&&(currentRole.indexOf('管理员')>-1||currentRole.indexOf('总经理')>-1)">待审核</span>
-              <span v-else-if="scope.row.status=='0'&&(currentRole.indexOf('管理员')==-1||currentRole.indexOf('总经理')==-1)">审核中</span>
-              <span v-else>编辑</span>
             </el-button>
           </template>
         </el-table-column>
@@ -139,10 +129,8 @@
         </el-pagination>
       </div>
     </div>
-    <el-dialog :visible.sync="dialogVisible" width="950px" title="制单" class="makeFormStyle">
+    <el-dialog :visible.sync="dialogVisible" width="920px" title="制单" class="makeFormStyle">
       <el-form :model="addForm" ref="addForm" size="mini" :rules="addFormRules" id="print_content">
-        <div class="normal_circle" v-show="formFlag==1||formFlag==4">正常</div>
-        <div class="invalid_circle" v-show="formFlag==2||formFlag==3">作废</div>
         <el-row style="padding:0 10px">
           <el-col :span="8">
             <el-form-item prop="aviationnum" label="单号" label-width="80px">
@@ -163,8 +151,8 @@
         <div class="formBorder">
           <el-row class="itemTitle">出港目的地</el-row>
           <el-row>
-            <el-col :span="8">
-              <el-form-item label="始发站" prop="startstation" label-width="80px">
+            <el-col :span="12">
+              <el-form-item label="始发站" prop="startstation" label-width="120px">
                 <el-select v-model="addForm.startstation" style="width:100%" @change="getFlightOptions" filterable>
                   <template v-for="element in startStationOptions">
                     <el-option :label="element.stationName" :value="element.stationName"
@@ -173,8 +161,8 @@
                 </el-select>
               </el-form-item>
             </el-col>
-            <el-col :span="8">
-              <el-form-item label="目的站" prop="outstation" label-width="80px">
+            <el-col :span="12">
+              <el-form-item label="目的站" prop="outstation" label-width="120px">
                 <el-select v-model="addForm.outstation" style="width:100%" @change="getFlightOptions" filterable>
                   <template v-for="element in outStationOptions">
                     <el-option :label="element.stationName" :value="element.stationName"
@@ -188,8 +176,7 @@
           <el-row>
             <el-col :span="8">
               <el-form-item label="姓名" prop="sendname" label-width="80px">
-                <el-select v-model="addForm.sendname" @change="changeSendName" style="width:100%"
-                           filterable default-first-option clearable>
+                <el-select v-model="addForm.sendname" @change="changeSendName" style="width:100%" filterable clearable>
                   <template v-for="item in sendNameOptions">
                     <el-option :label="item.sendname" :value="item.sendname" :key="item.sendname">
                     </el-option>
@@ -209,8 +196,8 @@
           <el-row>
             <el-col :span="8">
               <el-form-item label="姓名" prop="receivename" label-width="80px">
-                <el-select v-model="addForm.receivename" @change="changeReceiveName" style="width:100%"
-                           filterable allow-create default-first-option clearable>
+                <el-select v-model="addForm.receivename" @change="changeReceiveName" style="width:100%" filterable
+                           clearable>
                   <template v-for="item in receiveNameOptions">
                     <el-option :label="item.receivename" :value="item.receivename" :key="item.receivename"></el-option>
                   </template>
@@ -220,7 +207,7 @@
             <template v-for="item in receiveInfoOptions">
               <el-col :span="8">
                 <el-form-item :label="item.label" :prop='item.prop' label-width="80px">
-                  <el-input v-model="addForm[item.prop]"></el-input>
+                  <el-input v-model="addForm[item.prop]" :disabled="item.disable"></el-input>
                 </el-form-item>
               </el-col>
             </template>
@@ -288,38 +275,10 @@
             </el-col>
           </el-row>
           <el-row class="itemTitle">货物信息</el-row>
-          <el-table :data="cargoTableData" :size="cargoSize" width="100%" class="cargoTableStyle"
+          <el-table :data="cargoTableData" size="mini" width="100%" class="cargoTableStyle"
                     :summary-method="getSummaries"
                     @cell-click="cellEdit" :cell-class-name="getRowColumn" :span-method="objectSpanMethod">
-            <el-table-column label="件数" prop="rcp" align="center" width="60px">
-              <template slot-scope="scope">
-                <el-input v-model="scope.row.rcp"
-                          v-if="scope.row.index==tabRowIndex && scope.column.index==tabColumnIndex" :size="cargoSize">
-                </el-input>
-                <span v-else>{{scope.row.rcp}}</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="毛重(kg)" prop="grossall" align="center" width="70px">
-              <template slot-scope="scope">
-                <el-input v-model="scope.row.grossall"
-                          v-if="scope.row.index==tabRowIndex && scope.column.index==tabColumnIndex" :size="cargoSize">
-                </el-input>
-                <span v-else>{{scope.row.grossall}}</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="运价种类" prop="rateclass" align="center">
-              <template slot-scope="scope">
-                <el-select v-model="scope.row.rateclass"
-                           v-if="scope.row.index==tabRowIndex && scope.column.index==tabColumnIndex"
-                           @change="changeGoodType" :size="cargoSize" filterable>
-                  <template v-for="item in goodsInfoOptions">
-                    <el-option :label="item.goodtype" :value="item.goodtype" :key="item.goodtype"></el-option>
-                  </template>
-                </el-select>
-                <span v-else>{{scope.row.rateclass}}</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="商品代号" align="center">
+            <el-table-column label="商品代码" align="center">
               <template slot-scope="scope">
                 <el-select v-model="scope.row.itemnum"
                            v-if="scope.row.index==tabRowIndex && scope.column.index==tabColumnIndex"
@@ -331,14 +290,34 @@
                 <span v-else>{{scope.row.itemnum}}</span>
               </template>
             </el-table-column>
-            <el-table-column label="计费重量(kg)" prop="weightall" align="center" width="95px">
+            <el-table-column label="货物类型" prop="rateclass" align="center">
               <template slot-scope="scope">
-                <span>{{scope.row.weightall}}</span>
+                <el-select v-model="scope.row.rateclass"
+                           v-if="scope.row.index==tabRowIndex && scope.column.index==tabColumnIndex"
+                           @change="changeGoodType" :size="cargoSize" filterable>
+                  <template v-for="item in goodsInfoOptions">
+                    <el-option :label="item.goodtype" :value="item.goodtype" :key="item.goodtype"></el-option>
+                  </template>
+                </el-select>
+                <span v-else>{{scope.row.rateclass}}</span>
               </template>
             </el-table-column>
-            <el-table-column label="费率" prop="rate" align="center" width="60px">
+            <el-table-column label="毛重" prop="grossall" align="center" width="60px">
               <template slot-scope="scope">
-                <span>{{finalRatio}}</span>
+                <el-input v-model="scope.row.grossall"
+                          v-if="scope.row.index==tabRowIndex && scope.column.index==tabColumnIndex" :size="cargoSize">
+                </el-input>
+                <span v-else>{{scope.row.grossall}}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="计费重量" prop="weightall" align="center">
+              <template slot-scope="scope">
+                <span>{{addForm.weightall}}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="费率" prop="rate" align="center">
+              <template slot-scope="scope">
+                <span>{{getFinalRatio}}</span>
               </template>
             </el-table-column>
             <el-table-column label="航空运费" prop="airfreightall" align="center">
@@ -347,6 +326,14 @@
               </template>
             </el-table-column>
             <el-table-column label="尺寸(cm)" align="center">
+              <el-table-column label="件数" prop="rcp" align="center" width="60px">
+                <template slot-scope="scope">
+                  <el-input v-model="scope.row.rcp"
+                            v-if="scope.row.index==tabRowIndex && scope.column.index==tabColumnIndex" :size="cargoSize">
+                  </el-input>
+                  <span v-else>{{scope.row.rcp}}</span>
+                </template>
+              </el-table-column>
               <el-table-column label="货物包装" prop="goodname" align="center">
                 <template slot-scope="scope">
                   <el-select v-model="scope.row.goodname"
@@ -383,7 +370,7 @@
                   <span v-else>{{scope.row.gao}}</span>
                 </template>
               </el-table-column>
-              <el-table-column label="体积(m³)" prop="tiji" align="center" width="70px">
+              <el-table-column label="体积" prop="tiji" align="center" width="50px">
                 <template slot-scope="scope">
                   <span>{{scope.row.tiji}}</span>
                 </template>
@@ -402,7 +389,7 @@
           <el-row class="itemTitle">付款金额</el-row>
           <el-row>
             <template v-for="item in payOptions">
-              <el-col :span="12">
+              <el-col :span="8">
                 <el-form-item :label="item.label" :prop="item.prop" label-width="80px">
                   <el-radio-group v-model="addForm[item.prop]">
                     <template v-for="arr in item.radioOptions">
@@ -415,7 +402,7 @@
           </el-row>
           <el-row>
             <template v-for="item in chargeOptions">
-              <el-col :span="6">
+              <el-col :span="8">
                 <el-form-item :label="item.label" :prop="item.prop" label-width="80px">
                   <el-input v-model="addForm[item.prop]" :disabled="item.disable">
                   </el-input>
@@ -434,6 +421,10 @@
             <el-col :span="8">
               <el-form-item label="地点" prop="place" label-width="80px">
                 <el-input v-model="addForm.place" disabled></el-input>
+                <!--                <el-select v-model="addForm.place" style="width: 100%" filterable>-->
+                <!--                  <el-option label="北京分公司" value="北京分公司"></el-option>-->
+                <!--                  <el-option label="南京分公司" value="南京分公司"></el-option>-->
+                <!--                </el-select>-->
               </el-form-item>
             </el-col>
             <el-col :span="8">
@@ -443,62 +434,27 @@
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row v-if="formFlag==2||formFlag==3">
-            <el-col :span="8">
-              <el-form-item label="作废原因" prop="cancelreason" label-width="80px"
-                            :rules="{required: true, message: ' ', trigger: 'blur'}">
-                <el-select v-model="addForm.cancelreason" style="width:100%">
-                  <template v-for="item in cancelReasonOptions">
-                    <el-option :label="item.label" :value="item.label"></el-option>
-                  </template>
-                </el-select>
-              </el-form-item>
-            </el-col>
-            <el-col :span="8">
-              <el-form-item label="作废费用" prop="invalidcharge" label-width="80px"
-                            :rules="{required: true, message: ' ', trigger: 'blur'}">
-                <el-input v-model="addForm.invalidcharge"></el-input>
-              </el-form-item>
-            </el-col>
-          </el-row>
         </div>
       </el-form>
-      <span slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm('addForm','staging','')" :size="cargoSize"
-                   v-show="formFlag==0&&stagingFlag==0">暂存</el-button>
-        <el-button type="primary" @click="submitForm('addForm','used','')" :size="cargoSize"
-                   v-show="formFlag==0&&stagingFlag==0">提交</el-button>
-       <el-button type="primary" @click="submitForm('addForm','invalid','')" :size="cargoSize"
-                  v-show="formFlag==0&&stagingFlag==0">作废</el-button>
-         <el-button type="primary" @click="editSubmit('addForm','used','')" :size="cargoSize"
-                    v-show="formFlag==0&&stagingFlag==1">提交</el-button>
-        <el-button type="primary" @click="editSubmit('addForm','invalid','')" :size="cargoSize"
-                   v-show="formFlag==0&&stagingFlag==1">作废</el-button>
-        <el-button type="primary" @click="editSubmit('addForm','used','')" :size="cargoSize"
-                   v-show="formFlag==1">提交</el-button>
-        <el-button type="primary" @click="editSubmit('addForm','invalid','')" :size="cargoSize"
-                   v-show="formFlag==2">提交</el-button>
-        <el-button type="primary" v-print="'#print_content'" :size="cargoSize">打印</el-button>
-        <el-button type="primary" @click="submitForm('addForm','used','next')" :size="cargoSize"
-                   v-show="formFlag==0&&stagingFlag==0">下一票</el-button>
-         <el-button type="primary" @click="editSubmit('addForm','used','next')" :size="cargoSize"
-                    v-show="formFlag==0&&stagingFlag==1">下一票</el-button>
+      <span slot="footer" class="dialog-footer" v-show="permVisible=='valid'">
+        <el-button type="primary" @click="submitForm('addForm','staging','')"
+                   v-show="typeVisible=='makeform'" :size="tableSize">暂存</el-button>
+        <el-button type="primary" @click="submitForm('addForm','used','')" :size="tableSize">提交</el-button>
+        <el-button type="primary" @click="submitForm('addForm','invalid','')" :size="tableSize">作废</el-button>
+        <el-button type="primary" v-print="'#print_content'" :size="tableSize">打印</el-button>
+        <el-button type="primary" @click="submitForm('addForm','used','next')"
+                   v-show="typeVisible=='makeform'" :size="tableSize">下一票</el-button>
       </span>
       <el-dialog title="请选择作废原因" :visible.sync="invalidReasonDialogVisible" width="30%" append-to-body>
         <el-radio-group v-model="addForm.cancelreason">
-          <template v-for="item in cancelReasonOptions">
-            <el-radio :label="item.label"></el-radio>
-          </template>
+          <el-radio label="客户退货"></el-radio>
+          <el-radio label="航班取消"></el-radio>
+          <el-radio label="航班拉货"></el-radio>
+          <el-radio label="人为操作"></el-radio>
         </el-radio-group>
-        <el-row style="margin-top: 30px">
-          <el-col :span="6" style="padding:3px 0 0 25px">作废费用：
-          </el-col>
-          <el-col :span="8">
-            <el-input v-model="addForm.invalidcharge" :size="cargoSize"></el-input>
-          </el-col>
-        </el-row>
         <div slot="footer" class="dialog-footer">
-          <el-button type="primary" @click.native="submitFormInvalid" :size="cargoSize">确定</el-button>
+          <!--          <el-button @click.native="invalidReasonDialogVisible = false">取消</el-button>-->
+          <el-button type="primary" @click.native="submitFormInvalid" :size="tableSize">确定</el-button>
         </div>
       </el-dialog>
     </el-dialog>
@@ -531,8 +487,6 @@
         },
         data() {
             return {
-                stagingFlag: 0,//记录是否存在暂存数据，0不存在，1存在
-                formFlag: 0,// 0为制单，1为已使用的编辑，2为作废的编辑，3为作废的查看，4为已使用的查看
                 currentRole: Cookies.get('role'),
                 goodtype: '',
                 goodnum: '',
@@ -549,6 +503,8 @@
                 notUsedPageSize: 10,
                 headers: {token: Cookies.get('token')},
                 dateArray: [],//记录日期选择器时间
+                permVisible: 'invalid',//valid为制单和已使用单号的编辑页面（button保留），invalid为作废的查看页面，button禁掉。
+                typeVisible: 'makeform',//makeform为制单页面，edit为编辑页面
                 keywords: '',
                 usedTotal: 0,
                 invalidTotal: 0,
@@ -564,10 +520,10 @@
                 usedHeaders: [
                     {prop: "aviationnum", label: "单号"},
                     {prop: "sendname", label: "发货人"},
-                    {prop: "outstation", label: "目的站", width: '150px'},
-                    {prop: "flight", label: "航班号", width: '150px'},
-                    {prop: "rcpall", label: "件数", width: '150px'},
-                    {prop: "weightall", label: "重量", width: '150px'}
+                    {prop: "outstation", label: "目的站"},
+                    {prop: "flight", label: "航班号"},
+                    {prop: "rcpall", label: "件数"},
+                    {prop: "weightall", label: "重量"}
                 ],
                 invalidHeaders: [
                     {prop: "aviationnum", label: "作废单号"}
@@ -605,7 +561,6 @@
                     attention: '',
                     paytype: '',
                     weightcharge: '',
-                    makingcharge: '',
                     otherallcharges: '',
                     total: '',
                     filltime: '',
@@ -634,7 +589,6 @@
                     attention: [{required: true, message: ' ', trigger: 'blur'}],
                     paytype: [{required: true, message: ' ', trigger: 'blur'}],
                     weightcharge: [{required: true, message: ' ', trigger: 'blur'}],
-                    makingcharge: [{required: true, message: ' ', trigger: 'blur'}],
                     otherallcharges: [{required: true, message: ' ', trigger: 'blur'}],
                     total: [{required: true, message: ' ', trigger: 'blur'}],
                     filltime: [{required: true, message: ' ', trigger: 'blur'}],
@@ -713,7 +667,6 @@
                 ],
                 chargeOptions: [
                     {label: '航空费用', prop: 'weightcharge', disable: true},
-                    {label: '制单费用', prop: 'makingcharge', disable: false},
                     {label: '其他费用', prop: 'otherallcharges', disable: false},
                     {label: '总额', prop: 'total', disable: true},
                 ],
@@ -721,16 +674,20 @@
                     {label: '时间', prop: 'filltime', disable: true},
                     {label: '地点', prop: 'place', disable: false},
                     {label: '制单员', prop: 'carrier', disable: true}
-                ],
-                cancelReasonOptions: [
-                    {label: '客户退货'},
-                    {label: '航班取消'},
-                    {label: '航班拉货'},
-                    {label: '人为操作'}
                 ]
             };
         },
         methods: {
+            createSendInfo(name, tel, adr) {
+                this.$api.send.submitInfos({
+                    sendname: name,
+                    sendtel: tel,
+                    sendadr: adr,
+                }).then(res => {
+                    if (res.code == 200) {
+                    }
+                })
+            },
             createReceiveInfo(name, tel, adr) {
                 this.$api.receiver.submitInfos({
                     receivename: name,
@@ -754,7 +711,7 @@
                 column.index = columnIndex
             },
             objectSpanMethod({row, column, rowIndex, columnIndex}) {
-                if (columnIndex === 1 || columnIndex == 2 || columnIndex == 3 || columnIndex == 4 || columnIndex == 5 || columnIndex === 6) {
+                if (columnIndex === 0 || columnIndex === 1 || columnIndex == 2 || columnIndex == 3 || columnIndex == 4 || columnIndex == 5) {
                     if (rowIndex % this.cargoTableData.length === 0) {
                         return {
                             rowspan: this.cargoTableData.length,
@@ -842,6 +799,29 @@
                 this.notUsedCurrentPage = val
                 this.refreshData('not_used')
             },
+            getRatio() {
+                if (this.addForm.sendname != '' && this.addForm.sendname != undefined &&
+                    this.cargoTableData.length != 0
+                    && this.addForm.flight != '' && this.addForm.flight != undefined) {
+                    this.$api.ratio.getRatio({
+                        sendName: this.addForm.sendname,
+                        rateClass: this.cargoTableData[0].rateclass,
+                        flightNum: this.addForm.flight
+                    }).then(res => {
+                        console.log(res)
+                        if (res.code == 200) {
+                            if (res.data.length > 0) {
+                                this.cargoTableData[0].rate = res.data[0].ratio
+                                this.finalRatio = res.data[0].ratio
+                            } else {
+                                this.$message.warning("当前无匹配费率，请重新选择！")
+                                this.cargoTableData[0].rate = 0
+                                this.finalRatio = 0
+                            }
+                        }
+                    })
+                }
+            },
             getAviationnumOptions() { //获取单号
                 this.$api.tAviationnum.refreshList({
                     columnFilters: {type: {name: 'type', value: 'not_used'}},
@@ -860,11 +840,6 @@
                 } else {
                     this.addForm.firstcarrier = 'CZ'
                 }
-                if (val[1].indexOf('大兴') > -1) {
-                    this.addForm.startstation = "北京大兴"
-                } else if (val[1].indexOf('首都') > -1) {
-                    this.addForm.startstation = "北京首都"
-                }
                 this.$api.goods.searchGoods({
                     airFight: val[0]
                 }).then(res => {
@@ -873,6 +848,7 @@
                         this.goodsInfoOptions = res.data
                     }
                 })
+
             },
             getStationOptions(val) {//获取三类站点
                 this.$api.transfer.searchInfos({
@@ -909,7 +885,6 @@
                         this.addForm.cashtype = this.sendNameOptions[i].cashtype
                     }
                 }
-                this.getFinalRatio()
             },
             getReceiveNameOptions() {//获取收货人信息表
                 this.$api.receiver.getInfos({
@@ -946,14 +921,16 @@
                 }
             },
             selectFlight(val) {//选定航班，关联班次,获取费率
+                console.log(this.flightOptions)
+                console.log(val)
                 for (let i = 0; i < this.flightOptions.length; i++) {
                     if (this.flightOptions[i].flight == val) {
                         this.addForm.flightnum = this.flightOptions[i].flightnum
                     }
                 }
-                this.getFinalRatio()
             },
             changeGoodNum(val) {//商品代码改变，关联运价种类，获取费率
+                console.log(val)
                 this.goodnum = val
                 for (let i = 0; i < this.goodsInfoOptions.length; i++) {
                     if (this.goodsInfoOptions[i].goodnum == val) {
@@ -961,9 +938,10 @@
                         this.goodtype = this.goodsInfoOptions[i].goodtype
                     }
                 }
-                this.getFinalRatio()
+
             },
             changeGoodType(val) {//运价种类改变，关联商品代码，获取费率
+                console.log(val)
                 this.goodtype = val
                 for (let i = 0; i < this.goodsInfoOptions.length; i++) {
                     if (this.goodsInfoOptions[i].goodtype == val) {
@@ -971,56 +949,17 @@
                         this.goodnum = this.goodsInfoOptions[i].goodnum
                     }
                 }
-                this.getFinalRatio()
             },
             getCurrentTime() {//获取当前时间
                 let currentTime = new Date()
                 let dateValue = currentTime.getFullYear() + '-' + (currentTime.getMonth() + 1) + '-' + currentTime.getDate()
                 this.addForm.filltime = dateValue
             },
-            getUsedDetail(index, row) {  //获取已使用单号数据
-                this.getAviationnumOptions()
-                this.getStationOptions('始发站')
-                this.getStationOptions('中转站')
-                this.getStationOptions('目的站')
-                this.getSendNameOptions()
-                this.getReceiveNameOptions()
-                this.dialogVisible = true
-                var flightCompany = ''
-                if (row.deliverystation.indexOf("东航") > -1) {
-                    row.deliverystationArray = ['东航', row.deliverystation]
-                    flightCompany = '东航'
-                } else {
-                    row.deliverystationArray = ['南航', row.deliverystation]
-                    flightCompany = '南航'
-                }
-                this.addForm = Object.assign({}, row)
-                this.addForm.invalidcharge = 0;
-                this.cargoTableData = []
-                if (row.cargoTable != null && row.cargoTable != undefined) {
-                    for (var i = 0; i < row.cargoTable.length; i++) {
-                        this.cargoTableData.push(row.cargoTable[i])
-                    }
-                }
-                if (this.cargoTableData.length > 0) {
-                    this.goodtype = this.cargoTableData[0].rateclass
-                    this.getFinalRatio()
-                }
-                this.$api.goods.searchGoods({//获取货物列表
-                    airFight: flightCompany
-                }).then(res => {
-                    console.log(res)
-                    if (res.code == 200) {
-                        this.goodsInfoOptions = res.data
-                    }
-                })
-                this.getFlightOptions()//获取航班列表
-            },
-            getInvalidDetail(val) {// 获取作废单号的数据
+            viewInvalidDetail(index, row) {//查看作废单号---只有查看，最后一行功能要禁掉
                 this.addForm = {}
                 this.cargoTableData = []
                 this.$api.tAviationnum.viewDetail({
-                    aviationnum: val
+                    aviationnum: row.aviationnum
                 }).then(res => {
                     if (res.code == 200) {
                         this.addForm = Object.assign({}, res.data)
@@ -1031,7 +970,6 @@
                         }
                         if (this.cargoTableData.length > 0) {
                             this.goodtype = this.cargoTableData[0].rateclass
-                            this.getFinalRatio()
                         }
                         var flightCompany = ''
                         if (this.addForm.deliverystation.indexOf("东航") > -1) {
@@ -1041,20 +979,14 @@
                             this.addForm.deliverystationArray = ['南航', this.addForm.deliverystation]
                             flightCompany = '南航'
                         }
+                        this.permVisible = "invalid"
                         this.dialogVisible = true
                     }
                 })
+
             },
-            viewUsedDetail(index, row) {
-                this.formFlag = 4
-                this.getUsedDetail(index, row)
-            },
-            viewInvalidDetail(index, row) {// 查看作废单号
-                this.formFlag = 3
-                this.getInvalidDetail(row.aviationnum)
-            },
-            operateFormDetail(index, row) {//对于单号的权限操作
-                if (row.status == '0' && (this.currentRole.indexOf("管理员") > -1 || this.currentRole.indexOf('总经理') > -1)) {
+            operateUsedDetail(index, row) {//对于已使用单号的权限操作
+                if (row.status == '0' && (this.currentRole.indexOf("管理员") > -1|| this.currentRole.indexOf('总经理')>-1)) {
                     this.$confirm(row.lastupdateby + '申请编辑权限', '提示', {
                         confirmButtonText: '同意',
                         cancelButtonText: '取消',
@@ -1066,12 +998,7 @@
                             carrier: Cookies.get('user')
                         }).then(res => {
                             if (res.code == 200) {
-                                console.log(this.activeName)
-                                if (this.activeName == 'used') {
-                                    this.refreshUsedData()
-                                } else {
-                                    this.refreshData('invalid')
-                                }
+                                this.refreshUsedData()
                             } else {
                                 this.$message.warning(res.msg)
                             }
@@ -1082,442 +1009,345 @@
                             message: '已取消'
                         });
                     });
-                } else if (row.status == '-1') {//申请&待审核
+                }else if(row.status == '-1') {//申请&待审核
                     this.$api.tAviationnum.operateData({
                         aviationNum: row.aviationnum,
                         status: row.status,
                         carrier: Cookies.get('user')
                     }).then(res => {
                         if (res.code == 200) {
-                            if (this.activeName == 'used') {
-                                this.refreshUsedData()
-                            } else {
-                                this.refreshData('invalid')
-                            }
+                            this.refreshUsedData()
                         } else {
                             this.$message.warning(res.msg)
                         }
                     })
-                } else if (row.status == '0') {
-                    if (this.activeName == 'used') {
-                        this.refreshUsedData()
-                    } else {
-                        this.refreshData('invalid')
-                    }
                 } else {//编辑
-                    if (this.activeName == 'used') {
-                        this.formFlag = 1
-                        this.getUsedDetail(index, row)
-                    } else {
-                        this.formFlag = 2
-                        this.getInvalidDetail(row.aviationnum)
-                    }
+                    this.editUsedDetail(index, row)
                 }
-        },
-        searchTable() { //查询
-            this.usedCurrentPage = 1
-            this.refreshUsedData()
-        },
-        handleTabChange(tab, event) { //tab页切换
-            console.log(tab.name)
-            if (tab.index == 0) {
-                this.refreshUsedData()
-            } else {
-                this.refreshData(tab.name)
-            }
-        },
-        makeForm() {  //制单，获取暂存数据
-            this.formFlag = 0
-            this.addForm = {}
-            this.cargoTableData = []
-            this.getAviationnumOptions()
-            this.getStationOptions('始发站')
-            this.getStationOptions('中转站')
-            this.getStationOptions('目的站')
-            this.getSendNameOptions()
-            this.getReceiveNameOptions()
-            this.getCurrentTime()
-            this.addForm.carrier = Cookies.get('user')
-            this.addForm.place = Cookies.get('dep')
-            this.$api.tAviationnum.getStagingData().then(res => {
-                console.log(res)
-                if (res.code == 200) {
-                    if (res.data != null) {
-                        this.stagingFlag = 1
-                        this.aviationnumOptions = [] // 存在暂存数据的时候，必须先处理暂存数据，下拉列表置空，不可选别的单号
-                        var flightCompany = ''
-                        if (res.data.deliverystation.indexOf("东航") > -1) {
-                            res.data.deliverystationArray = ['东航', res.data.deliverystation]
-                            flightCompany = '东航'
-                        } else {
-                            res.data.deliverystationArray = ['南航', res.data.deliverystation]
-                            flightCompany = '南航'
-                        }
-                        this.addForm = Object.assign({}, res.data)
-                        if (res.data.cargoTable != null && res.data.cargoTable != undefined) {
-                            for (var i = 0; i < res.data.cargoTable.length; i++) {
-                                this.cargoTableData.push(res.data.cargoTable[i])
-                            }
-                            if (this.cargoTableData.length > 0) {
-                                this.goodtype = this.cargoTableData[0].rateclass
-                                this.getFinalRatio()
-                            }
-                            this.$api.goods.searchGoods({//获取货物列表
-                                airFight: flightCompany
-                            }).then(res => {
-                                if (res.code == 200) {
-                                    this.goodsInfoOptions = res.data
-                                }
-                            })
-                            this.getFlightOptions()//获取航班列表
-                        }
-                    } else {
-                        this.stagingFlag = 0
-                    }
+            },
+            editUsedDetail(index, row) {  //修改已使用单号
+                this.getAviationnumOptions()
+                this.getStationOptions('始发站')
+                this.getStationOptions('中转站')
+                this.getStationOptions('目的站')
+                this.getSendNameOptions()
+                this.getReceiveNameOptions()
+                this.permVisible = "valid"
+                this.typeVisible = 'edit'
+                this.dialogVisible = true
+                var flightCompany = ''
+                if (row.deliverystation.indexOf("东航") > -1) {
+                    row.deliverystationArray = ['东航', row.deliverystation]
+                    flightCompany = '东航'
                 } else {
-                    this.$message.error("获取暂存数据失败！")
+                    row.deliverystationArray = ['南航', row.deliverystation]
+                    flightCompany = '南航'
                 }
-                this.dialogVisible = true;
-            })
-            this.addForm.invalidcharge = 0;
-        },
-        refreshUsedData() { // 更新已使用单号列表
-            const columnFilter = {
-                keywords: {name: 'keywords', value: this.keywords},
-                date1: {name: 'date1', value: this.dateArray.length > 0 ? this.dateArray[0] : ''},
-                date2: {name: 'date2', value: this.dateArray.length > 0 ? this.dateArray[1] : ''},
-            }
-            this.$api.tAviationnum.refreshUsedList({
-                columnFilters: columnFilter,
-                pageSize: this.usedPageSize,
-                pageNum: this.usedCurrentPage
-            }).then(res => {
-                console.log(res)
-                if (res.code == 200) {
-                    this.usedTable = res.data.content
-                    this.usedTotal = res.data.totalSize
-                }
-            })
-        },
-        refreshData(val) { // 更新作废单号列表或者未使用单号列表
-            this.$api.tAviationnum.refreshList({
-                columnFilters: {type: {name: 'type', value: val}},
-                pageSize: val == 'invalid' ? this.invalidPageSize : this.notUsedPageSize,
-                pageNum: val == 'invalid' ? this.invalidCurrentPage : this.notUsedCurrentPage
-            }).then(res => {
-                console.log(res)
-                if (res.code == 200) {
-                    if (val == 'invalid') {
-                        this.invalidTable = res.data.content
-                        this.invalidTotal = res.data.totalSize
-                    } else {
-                        this.notUsedTable = res.data.content
-                        this.notUsedTotal = res.data.totalSize
+                this.addForm = Object.assign({}, row)
+                this.cargoTableData = []
+                if (row.cargoTable != null && row.cargoTable != undefined) {
+                    for (var i = 0; i < row.cargoTable.length; i++) {
+                        this.cargoTableData.push(row.cargoTable[i])
                     }
                 }
-            })
-        },
-        submitSingleForm: function () {  // 单号导入--提交
-            this.$refs.dataForm.validate((valid) => {
-                if (valid) {
-                    this.$confirm('确认提交吗？', '提示', {}).then(() => {
-                        let params = Object.assign({}, this.dataForm)
-                        this.$api.tAviationnum.save(params).then((res) => {
-                            if (res.code == 200) {
-                                this.$message({message: '操作成功', type: 'success'})
-                                this.$refs['dataForm'].resetFields()
-                                this.singleDialogVisible = false
-                                this.activeName = 'not_used'
-                                this.refreshData('not_used')
-                                this.getAviationnumOptions()
-                            } else {
-                                this.$message({message: '操作失败, ' + res.msg, type: 'error'})
-                            }
-                        })
-                    })
+                if (this.cargoTableData.length > 0) {
+                    this.goodtype = this.cargoTableData[0].rateclass
                 }
-            })
-        },
-        submitForm(formval, val, e) { // 制单----提交、作废、暂存、下一票
-            if (val == 'staging') {
-                this.addForm.delflag = -1;
-            } else if (val == 'used') {
-                this.addForm.delflag = 1;
-            } else {
-                this.addForm.delflag = 2
-            }
-            this.addForm.lastupdateby = Cookies.get('user')
-            this.addForm.cargoTable = this.cargoTableData
-            this.$refs[formval].validate((valid) => {
-                const that = this
-                if (valid) {
-                    if (val == 'invalid') {
-                        this.invalidReasonDialogVisible = true
-                    } else {
-                        this.$api.tAviationnum.savetAviation(this.addForm).then(res => {
-                            if (res.code == 200) {
-                                that.$message({message: '操作成功', type: 'success'})
-                                that.refreshUsedData()
-                                that.refreshData("invalid")
-                                that.refreshData("not_used")
-                                this.$refs[formval].resetFields()
-                                that.cargoTableData = []
-                                if (e != 'next') {
-                                    that.getAviationnumOptions()
-                                    that.getCurrentTime()
-                                    that.dialogVisible = false
-                                }
-                            } else {
-                                that.$message.error(res.msg)
-                            }
-                        })
-                    }
-
-                }
-            })
-        },
-        submitFormInvalid() {
-            this.addForm.weightcharge = 0
-            console.log(this.addForm)
-            if (this.stagingFlag == 0) {
-                this.$api.tAviationnum.savetAviation(this.addForm).then(res => {
-                    console.log(res)
-                    if (res.code == 200) {
-                        this.$message({message: '操作成功', type: 'success'})
-                        this.refreshUsedData()
-                        this.refreshData("invalid")
-                        this.refreshData("not_used")
-                        this.invalidReasonDialogVisible = false
-                        this.dialogVisible = false
-                        this.$refs['addForm'].resetFields()
-                    }
-                })
-            } else {
-                this.$api.tAviationnum.editSubmittAviation(this.addForm).then(res => {
-                    console.log(res)
-                    if (res.code == 200) {
-                        this.$message({message: '操作成功', type: 'success'})
-                        this.refreshUsedData()
-                        this.refreshData("invalid")
-                        this.refreshData("not_used")
-                        this.invalidReasonDialogVisible = false
-                        this.dialogVisible = false
-                        this.$refs['addForm'].resetFields()
-                    } else {
-                        this.$message.error(res.msg)
-                    }
-                })
-            }
-        },
-        editSubmit(formval, val, e) {
-            if (val == 'staging') {
-                this.addForm.delflag = -1;
-            } else if (val == 'used') {
-                this.addForm.delflag = 1;
-            } else {
-                this.addForm.delflag = 2
-            }
-            this.addForm.lastupdateby = Cookies.get('user')
-            this.addForm.cargoTable = this.cargoTableData
-            console.log(this.addForm)
-            this.$refs[formval].validate((valid) => {
-                const that = this
-                if (valid) {
-                    if (val == 'invalid' && this.formFlag == 0) {
-                        this.invalidReasonDialogVisible = true
-                    } else {
-                        this.$api.tAviationnum.editSubmittAviation(this.addForm).then(res => {
-                            if (res.code == 200) {
-                                that.$message({message: '操作成功', type: 'success'})
-                                that.refreshUsedData()
-                                that.refreshData("invalid")
-                                that.refreshData("not_used")
-                                this.$refs[formval].resetFields()
-                                that.cargoTableData = []
-                                if (e != 'next') {
-                                    that.getAviationnumOptions()
-                                    that.getCurrentTime()
-                                    that.dialogVisible = false
-                                }
-                            } else {
-                                that.$message.error(res.msg)
-                            }
-                        })
-                    }
-                }
-            })
-        },
-        fileSuccess(res, file, fileList) {
-            this.$message.success("文件上传成功")
-            this.activeName = 'not_used'
-            this.refreshData('not_used')
-        },
-        fileError(err, file, fileList) {
-            this.$message.error("文件上传失败");
-        },
-        fileChange(files, fileList) {
-            console.log(files);
-            this.fileList = [];
-            this.fileList.push(files.raw);
-            let file = new FormData();
-            file.append("file", files.raw);
-        },
-        handleExceed(files, fileList) {
-            this.$message.warning(`当前限制选择 1 个文件，本次选择了 ${
-                files.length
-            } 个文件，
-            共选择了 ${files.length + fileList.length} 个文件`);
-        },
-        getFinalRatio() {
-            if (this.addForm.sendname != '' && this.addForm.sendname != undefined
-                && this.goodtype != ''
-                && this.addForm.flight != '' && this.addForm.flight != undefined
-                && this.addForm.weightall != '' && this.addForm.weightall != undefined) {
-                this.$api.ratio.getRatio({
-                    sendName: this.addForm.sendname,
-                    rateClass: this.goodtype,
-                    flightNum: this.addForm.flight,
-                    chargeWeight: this.addForm.weightall
+                this.$api.goods.searchGoods({//获取货物列表
+                    airFight: flightCompany
                 }).then(res => {
                     console.log(res)
                     if (res.code == 200) {
-                        if (res.data.length > 0) {
-                            this.finalRatio = res.data[0].ratio
-                            this.addForm.weightcharge = Number(this.addForm.weightall * this.finalRatio).toFixed(2)
-                            // this.$set(this.addForm,'weightcharge',Number(this.addForm.weightall * this.finalRatio).toFixed(2))
-                            this.addForm = Object.assign({}, this.addForm)
-                            this.addForm.total = Number(this.addForm.otherallcharges) + Number(this.addForm.weightcharge) + Number(this.addForm.makingcharge) + Number(this.addForm.invalidcharge)
-                            for (let i = 0; i < this.cargoTableData.length; i++) {//费率变化--航空运费改变
-                                this.cargoTableData[i].rate = res.data[0].ratio
-                                this.cargoTableData[i].weightall = this.addForm.weightall
-                                this.cargoTableData[i].airfreightall = this.addForm.weightcharge
+                        this.goodsInfoOptions = res.data
+                    }
+                })
+                this.getFlightOptions()//获取航班列表
+            },
+            searchTable() { //查询
+                this.usedCurrentPage = 1
+                this.refreshUsedData()
+            },
+            handleTabChange(tab, event) { //tab页切换
+                console.log(tab.name)
+                if (tab.index == 0) {
+                    this.refreshUsedData()
+                } else {
+                    this.refreshData(tab.name)
+                }
+            },
+            makeForm() {  //制单，获取暂存数据
+                // this.addForm={weightcharge: 0,total:0}
+                this.cargoTableData = []
+                this.getAviationnumOptions()
+                this.getStationOptions('始发站')
+                this.getStationOptions('中转站')
+                this.getStationOptions('目的站')
+                this.getSendNameOptions()
+                this.getReceiveNameOptions()
+                this.getCurrentTime()
+                this.addForm.carrier = Cookies.get('user')
+                this.addForm.place = Cookies.get('dep')
+                this.permVisible = 'valid';
+                this.typeVisible = 'makeform'
+                this.$api.tAviationnum.getStagingData().then(res => {
+                    console.log(res)
+                    if (res.code == 200) {
+                        if (res.data != null) {
+                            this.aviationnumOptions = [] // 存在暂存数据的时候，必须先处理暂存数据，下拉列表置空，不可选别的单号
+                            var flightCompany = ''
+                            if (res.data.deliverystation.indexOf("东航") > -1) {
+                                res.data.deliverystationArray = ['东航', res.data.deliverystation]
+                                flightCompany = '东航'
+                            } else {
+                                res.data.deliverystationArray = ['南航', res.data.deliverystation]
+                                flightCompany = '南航'
                             }
+                            this.addForm = Object.assign({}, res.data)
+                            if (res.data.cargoTable != null && res.data.cargoTable != undefined) {
+                                for (var i = 0; i < res.data.cargoTable.length; i++) {
+                                    this.cargoTableData.push(res.data.cargoTable[i])
+                                }
+                                if (this.cargoTableData.length > 0) {
+                                    this.goodtype = this.cargoTableData[0].rateclass
+                                }
+                                this.$api.goods.searchGoods({//获取货物列表
+                                    airFight: flightCompany
+                                }).then(res => {
+                                    if (res.code == 200) {
+                                        this.goodsInfoOptions = res.data
+                                    }
+                                })
+                                this.getFlightOptions()//获取航班列表
+                            }
+                        }
+                    } else {
+                        this.$message.error("获取暂存数据失败！")
+                    }
+                    this.dialogVisible = true;
+                })
+            },
+            refreshUsedData() { // 更新已使用单号列表
+                const columnFilter = {
+                    keywords: {name: 'keywords', value: this.keywords},
+                    date1: {name: 'date1', value: this.dateArray.length > 0 ? this.dateArray[0] : ''},
+                    date2: {name: 'date2', value: this.dateArray.length > 0 ? this.dateArray[1] : ''},
+                }
+                this.$api.tAviationnum.refreshUsedList({
+                    columnFilters: columnFilter,
+                    pageSize: this.usedPageSize,
+                    pageNum: this.usedCurrentPage
+                }).then(res => {
+                    console.log(res)
+                    if (res.code == 200) {
+                        this.usedTable = res.data.content
+                        this.usedTotal = res.data.totalSize
+                    }
+                })
+            },
+            refreshData(val) { // 更新作废单号列表或者未使用单号列表
+                this.$api.tAviationnum.refreshList({
+                    columnFilters: {type: {name: 'type', value: val}},
+                    pageSize: val == 'invalid' ? this.invalidPageSize : this.notUsedPageSize,
+                    pageNum: val == 'invalid' ? this.invalidCurrentPage : this.notUsedCurrentPage
+                }).then(res => {
+                    console.log(res)
+                    if (res.code == 200) {
+                        if (val == 'invalid') {
+                            this.invalidTable = res.data.content
+                            this.invalidTotal = res.data.totalSize
                         } else {
-                            this.$message.warning("当前无匹配费率，请重新选择！")
-                            this.finalRatio = 0
-                            this.addForm.weightcharge = Number(this.addForm.weightall * this.finalRatio).toFixed(2)
-                            this.addForm = Object.assign({}, this.addForm)
-                            this.addForm.total = Number(this.addForm.otherallcharges) + Number(this.addForm.weightcharge) + Number(this.addForm.makingcharge) + Number(this.addForm.invalidcharge)
-                            for (var i = 0; i < this.cargoTableData.length; i++) {
-                                this.cargoTableData[i].rate = 0
-                                this.cargoTableData[i].weightall = this.addForm.weightall
-                                this.cargoTableData[i].airfreightall = 0
-                            }
+                            this.notUsedTable = res.data.content
+                            this.notUsedTotal = res.data.totalSize
+                        }
+                    }
+                })
+            },
+            submitSingleForm: function () {  // 单号导入--提交
+                this.$refs.dataForm.validate((valid) => {
+                    if (valid) {
+                        this.$confirm('确认提交吗？', '提示', {}).then(() => {
+                            let params = Object.assign({}, this.dataForm)
+                            this.$api.tAviationnum.save(params).then((res) => {
+                                if (res.code == 200) {
+                                    this.$message({message: '操作成功', type: 'success'})
+                                    this.$refs['dataForm'].resetFields()
+                                    this.singleDialogVisible = false
+                                    this.activeName = 'not_used'
+                                    this.refreshData('not_used')
+                                    this.getAviationnumOptions()
+                                } else {
+                                    this.$message({message: '操作失败, ' + res.msg, type: 'error'})
+                                }
+                            })
+                        })
+                    }
+                })
+            },
+            submitForm(formval, val, e) { // 制单----提交、作废、暂存、下一票
+                this.addForm.lastupdateby = Cookies.get('user')
+                if (val == 'staging') {
+                    this.addForm.delflag = -1;
+                } else if (val == 'used') {
+                    this.addForm.delflag = 1;
+                } else {
+                    this.addForm.delflag = 2
+                }
+                this.addForm.cargoTable = this.cargoTableData
+                console.log(this.addForm)
+                this.$refs[formval].validate((valid) => {
+                    const that = this
+                    if (valid) {
+                        if (val == 'invalid') {
+                            this.invalidReasonDialogVisible = true
+                        } else {
+                            this.$api.tAviationnum.savetAviation(this.addForm).then(res => {
+                                if (res.code == 200) {
+                                    that.$message({message: '操作成功', type: 'success'})
+                                    that.refreshUsedData()
+                                    that.refreshData("invalid")
+                                    that.refreshData("not_used")
+                                    that.$refs[formval].resetFields()
+                                    that.cargoTableData = []
+                                    if (e != 'next') {
+                                        that.getAviationnumOptions()
+                                        that.getCurrentTime()
+                                        that.dialogVisible = false
+                                    }
+                                }
+                            })
                         }
 
                     }
                 })
-            } else {
-                this.finalRatio = 0
-            }
-            return this.finalRatio
-        }
-    },
-    mounted(){
-        this.refreshUsedData()
-        this.refreshData('invalid')
-        this.refreshData('not_used')
-    },
-    watch: {
-        cargoTableData: {
-            handler(newarr, oldarr)
-            { //
-                this.addForm.rcpall = 0;//记录总件数
-                let weightOldValue = this.addForm.weightall
-                var weight_num = 0
-                for (let i = 0; i < this.cargoTableData.length; i++) {
-                    this.cargoTableData[i].rate = this.cargoTableData[0].rate
-                    this.cargoTableData[i].tiji = Number(this.cargoTableData[i].chang * this.cargoTableData[i].kuan * this.cargoTableData[i].gao * this.cargoTableData[i].rcp / 1000000)
-                    if (isNaN(this.cargoTableData[i].tiji)) {
-                        this.cargoTableData[i].chargeweight = 0
-                    } else {
-                        this.cargoTableData[i].chargeweight = Number(this.cargoTableData[i].tiji * 1000 / 6).toFixed(2)//单个泡重
+            },
+            submitFormInvalid() {
+                console.log(this.addForm)
+                this.$api.tAviationnum.savetAviation(this.addForm).then(res => {
+                    if (res.code == 200) {
+                        this.$message({message: '操作成功', type: 'success'})
+                        this.refreshUsedData()
+                        this.refreshData("invalid")
+                        this.refreshData("not_used")
+                        this.invalidReasonDialogVisible = false
+                        this.dialogVisible = false
+                        this.$refs['addForm'].resetFields()
                     }
-                    weight_num += Number(this.cargoTableData[i].chargeweight)//计算总的泡重
-                    this.addForm.rcpall += Number(this.cargoTableData[i].rcp)
-                    if (i > 0) {
-                        this.cargoTableData[i].grossall = this.cargoTableData[0].grossall//给每条数据记录总毛重
+                })
+            },
+            fileSuccess(res, file, fileList) {
+                this.$message.success("")
+                this.activeName = 'not_used'
+                this.refreshData('not_used')
+            },
+            fileError(err, file, fileList) {
+                this.$message.error("文件上传失败");
+            },
+            fileChange(files, fileList) {
+                console.log(files);
+                this.fileList = [];
+                this.fileList.push(files.raw);
+                let file = new FormData();
+                file.append("file", files.raw);
+            },
+            handleExceed(files, fileList) {
+                this.$message.warning(`当前限制选择 1 个文件，本次选择了 ${
+                    files.length
+                } 个文件，
+            共选择了 ${files.length + fileList.length} 个文件`);
+            },
+        },
+        mounted() {
+            this.refreshUsedData()
+            this.refreshData('invalid')
+            this.refreshData('not_used')
+        },
+        watch: {
+            cargoTableData: {
+                handler(newarr, oldarr) { //
+                    this.addForm.rcpall = 0;//记录总件数
+                    this.addForm.weightcharge = 0;//记录总航空费用
+                    this.addForm.weightall = 0;//记录计费重量
+                    var weight_num = 0
+                    for (let i = 0; i < this.cargoTableData.length; i++) {
+                        this.cargoTableData[i].rate = this.cargoTableData[0].rate
+                        this.cargoTableData[i].tiji = Number(this.cargoTableData[i].chang * this.cargoTableData[i].kuan * this.cargoTableData[i].gao * this.cargoTableData[i].rcp).toFixed(2)
+                        if (isNaN(this.cargoTableData[i].tiji)) {
+                            this.cargoTableData[i].chargeweight = 0
+                        } else {
+                            this.cargoTableData[i].chargeweight = Number(this.cargoTableData[i].tiji / 6000).toFixed(2)//单个泡重
+                        }
+                        weight_num += Number(this.cargoTableData[i].chargeweight)//计算总的泡重
+                        this.addForm.rcpall += Number(this.cargoTableData[i].rcp)
+                        this.addForm.total = Number(this.addForm.otherallcharges) + Number(this.addForm.weightcharge)
+                        if (i > 0) {
+                            this.cargoTableData[i].grossall = this.cargoTableData[0].grossall//给每条数据记录总毛重
+                        }
                     }
-                }
-                if (this.cargoTableData.length > 0 && this.cargoTableData[0].grossall != undefined) {
-                    this.addForm.weightall = Number(weight_num) > Number(this.cargoTableData[0].grossall) ? Math.ceil(weight_num) : Math.ceil(this.cargoTableData[0].grossall)
+                    for (let i = 0; i < this.cargoTableData.length; i++) {//记录每条数据的泡重，计算总航空费用，给每条数据记录总航空费用
+                        this.addForm.weightall = Number(weight_num)>Number(this.cargoTableData[0].grossall)?Number(weight_num):Number(this.cargoTableData[0].grossall)
+                        this.cargoTableData[i].weightall = weight_num //泡重
+                        this.addForm.weightcharge = Number(this.addForm.weightall * this.finalRatio).toFixed(2)
+                        this.cargoTableData[i].airfreightall = this.addForm.weightcharge
+                    }
+
+                },
+                immediate: true,
+                deep: true
+            },
+            'addForm.otherallcharges': {
+                handler(newvalue, oldvalue) {
+                    this.addForm.total = Number(this.addForm.otherallcharges) + Number(this.addForm.weightcharge)
+                },
+                immediate: true,
+                deep: true
+            },
+            'addForm.weightcharge': {
+                handler(newvalue, oldvalue) {
+                    this.addForm.total = Number(this.addForm.otherallcharges) + Number(this.addForm.weightcharge)
+                },
+                immediate: true,
+                deep: true
+            },
+        },
+        computed: {
+            getFinalRatio() {
+                if (this.addForm.sendname != '' && this.addForm.sendname != undefined && this.goodtype != ''
+                    && this.addForm.flight != '' && this.addForm.flight != undefined) {
+                    this.$api.ratio.getRatio({
+                        sendName: this.addForm.sendname,
+                        rateClass: this.goodtype,
+                        flightNum: this.addForm.flight
+                    }).then(res => {
+                        if (res.code == 200) {
+                            if (res.data.length > 0) {
+                                for (var i = 0; i < this.cargoTableData.length; i++) {
+                                    this.cargoTableData[i].rate = res.data[0].ratio
+                                }
+                                this.finalRatio = res.data[0].ratio
+                                this.addForm.weightcharge = Number(this.addForm.weightall * this.finalRatio).toFixed(2)
+                                for (let i = 0; i < this.cargoTableData.length; i++) {//费率变化--航空运费改变
+                                    this.cargoTableData[i].airfreightall = this.addForm.weightcharge
+                                }
+                            } else {
+                                this.$message.warning("当前无匹配费率，请重新选择！")
+                                this.finalRatio = 0
+                                this.addForm.weightcharge = 0
+                                for (var i = 0; i < this.cargoTableData.length; i++) {
+                                    this.cargoTableData[i].rate = 0
+                                }
+                                for (let i = 0; i < this.cargoTableData.length; i++) {
+                                    this.cargoTableData[i].airfreightall = 0
+                                }
+                            }
+
+                        }
+                    })
                 } else {
-                    this.addForm.weightall = 0
+                    this.finalRatio = 0
                 }
-                if (this.addForm.weightall != weightOldValue) {
-                    this.getFinalRatio()
-                }
-                this.addForm.weightcharge = Number(this.addForm.weightall * this.finalRatio).toFixed(2)
-                this.addForm = Object.assign({}, this.addForm)
-                for (let i = 0; i < this.cargoTableData.length; i++) {//给每条数据记录总航空费用
-                    this.cargoTableData[i].weightall = this.addForm.weightall
-                    this.cargoTableData[i].airfreightall = this.addForm.weightcharge
-                }
-            }
-        ,
-            immediate: true,
-                deep
-        :
-            true
+                return this.finalRatio
+            },
         }
-    ,
-        'addForm.weightcharge'
-    :
-        {
-            handler(newvalue, oldvalue)
-            {
-                this.addForm.total = Number(this.addForm.otherallcharges) + Number(this.addForm.weightcharge) + Number(this.addForm.makingcharge) + Number(this.addForm.invalidcharge)
-            }
-        ,
-            immediate: true,
-                deep
-        :
-            true
-        }
-    ,
-        'addForm.otherallcharges'
-    :
-        {
-            handler(newvalue, oldvalue)
-            {
-                this.addForm.total = Number(this.addForm.otherallcharges) + Number(this.addForm.weightcharge) + Number(this.addForm.makingcharge) + Number(this.addForm.invalidcharge)
-            }
-        ,
-            immediate: true,
-                deep
-        :
-            true
-        }
-    ,
-        'addForm.makingcharge'
-    :
-        {
-            handler(newvalue, oldvalue)
-            {
-                this.addForm.total = Number(this.addForm.otherallcharges) + Number(this.addForm.weightcharge) + Number(this.addForm.makingcharge) + Number(this.addForm.invalidcharge)
-            }
-        ,
-            immediate: true,
-                deep
-        :
-            true
-        }
-    ,
-        'addForm.invalidcharge'
-    :
-        {
-            handler(newvalue, oldvalue)
-            {
-                this.addForm.total = Number(this.addForm.otherallcharges) + Number(this.addForm.weightcharge)
-                    + Number(this.addForm.makingcharge) + Number(this.addForm.invalidcharge)
-            }
-        ,
-            immediate: true,
-                deep
-        :
-            true
-        }
-    }
     };
 </script>
 <style scoped lang="scss">
@@ -1662,7 +1492,7 @@
   }
 
   .makeFormStyle /deep/ .el-dialog__body {
-    padding: 10px 20px 20px 20px
+    padding: 10px 20px
   }
 
   .makeFormStyle /deep/ .el-form-item {
@@ -1747,45 +1577,5 @@
   .form_input_style /deep/ .el-input__inner {
     padding: 0 0px;
     width: 100%
-  }
-
-  .normal_circle {
-    position: absolute;
-    right: 100px;
-    top: 60px;
-    width: 40px;
-    height: 15px;
-    line-height: 15px;
-    padding: 25px;
-    color: #fff;
-    font-weight: bold;
-    text-align: center;
-    word-break: break-all;
-    border-radius: 50%;
-    background-color: #5acc9b;
-    background-position: right bottom;
-    box-shadow: 0 0 0 2px #ffffff, 0 0 0 8px #5acc9b, 0 0 0 25px #fff, 0 0 0 27px #8fddbb, 0 0 0 32px #fff, 0 0 0 34px #dbf4ea;
-    font-size: 20px;
-    transform: rotate(-45deg);
-  }
-
-  .invalid_circle {
-    position: absolute;
-    right: 100px;
-    top: 60px;
-    width: 40px;
-    height: 15px;
-    line-height: 15px;
-    padding: 25px;
-    color: #fff;
-    font-weight: bold;
-    text-align: center;
-    word-break: break-all;
-    border-radius: 50%;
-    background-color: #f44336;
-    background-position: right bottom;
-    box-shadow: 0 0 0 2px #ffffff, 0 0 0 8px #f44336, 0 0 0 25px #fff, 0 0 0 27px #f44336d4, 0 0 0 32px #fff, 0 0 0 34px #f44336b3;
-    font-size: 20px;
-    transform: rotate(-45deg);
   }
 </style>

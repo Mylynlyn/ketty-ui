@@ -71,3 +71,12 @@ export const viewDetail=(params)=>{
     params
   })
 }
+// 编辑——提交
+export const editSubmittAviation = (data) => {
+  return axios({
+    url: '/tAviation/edit',
+    method: 'post',
+    data
+  })
+}
+
