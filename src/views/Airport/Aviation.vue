@@ -477,6 +477,8 @@
         <el-button type="primary" @click="editSubmit('addForm','used','')" :size="cargoSize"
                    v-show="formFlag==1">提交</el-button>
         <el-button type="primary" @click="editSubmit('addForm','invalid','')" :size="cargoSize"
+                   v-show="formFlag==1">作废</el-button>
+        <el-button type="primary" @click="editSubmit('addForm','invalid','')" :size="cargoSize"
                    v-show="formFlag==2">提交</el-button>
         <el-button type="primary" v-print="'#print_content'" :size="cargoSize">打印</el-button>
         <el-button type="primary" @click="submitForm('addForm','used','next')" :size="cargoSize"
@@ -484,21 +486,23 @@
          <el-button type="primary" @click="editSubmit('addForm','used','next')" :size="cargoSize"
                     v-show="formFlag==0&&stagingFlag==1">下一票</el-button>
       </span>
-      <el-dialog title="请选择作废原因" :visible.sync="invalidReasonDialogVisible" width="30%" append-to-body>
-        <el-radio-group v-model="addForm.cancelreason">
-          <template v-for="item in cancelReasonOptions">
-            <el-radio :label="item.label"></el-radio>
-          </template>
-        </el-radio-group>
-        <el-row style="margin-top: 30px">
-          <el-col :span="6" style="padding:3px 0 0 25px">作废费用：
-          </el-col>
-          <el-col :span="8">
-            <el-input v-model="addForm.invalidcharge" :size="cargoSize"></el-input>
-          </el-col>
-        </el-row>
+      <el-dialog title="请选择作废原因" :visible.sync="invalidReasonDialogVisible" width="550px" append-to-body>
+        <el-form :model='invalidForm' ref="invalidForm">
+          <el-form-item label="作废原因" prop="cancelreason" label-width="80px" :rules="{required: true, message: '请选择作废原因', trigger: 'blur'}">
+            <el-radio-group v-model="invalidForm.cancelreason">
+              <template v-for="item in cancelReasonOptions">
+                <el-radio :label="item.label"></el-radio>
+              </template>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="作废费用" prop="invalidcharge" label-width="80px" :rules="{required: true, message: ' ', trigger: 'blur'}">
+            <el-row>
+              <el-col :span="12"><el-input v-model="invalidForm.invalidcharge" :size="cargoSize"></el-input></el-col>
+            </el-row>
+          </el-form-item>
+        </el-form>
         <div slot="footer" class="dialog-footer">
-          <el-button type="primary" @click.native="submitFormInvalid" :size="cargoSize">确定</el-button>
+          <el-button type="primary" @click.native="submitFormInvalid('invalidForm')" :size="cargoSize">确定</el-button>
         </div>
       </el-dialog>
     </el-dialog>
@@ -531,6 +535,7 @@
         },
         data() {
             return {
+                invalidForm:{},
                 stagingFlag: 0,//记录是否存在暂存数据，0不存在，1存在
                 formFlag: 0,// 0为制单，1为已使用的编辑，2为作废的编辑，3为作废的查看，4为已使用的查看
                 currentRole: Cookies.get('role'),
@@ -538,7 +543,7 @@
                 goodnum: '',
                 finalRatio: 0,
                 rcpVisible: false,
-                invalidReasonDialogVisible: false,
+                invalidReasonDialogVisible:false,
                 cargoSize: 'mini',
                 tableSize: 'small',
                 usedCurrentPage: 1,
@@ -770,6 +775,9 @@
             },
             deleteCargoRow(index, rows) {
                 rows.splice(index, 1)
+                if(this.cargoTableData.length==0){
+                    this.goodtype=''
+                }
             },
             getSummaries(param) {
                 const {columns, data} = param;
@@ -869,7 +877,7 @@
                     airFight: val[0]
                 }).then(res => {
                     console.log(res)
-                    if (res.code == 200) {
+                    if (res.status == 200) {
                         this.goodsInfoOptions = res.data
                     }
                 })
@@ -878,7 +886,7 @@
                 this.$api.transfer.searchInfos({
                     note: val
                 }).then(res => {
-                    if (res.code == 200) {
+                    if (res.status == 200) {
                         if (val == '始发站') {
                             this.startStationOptions = res.data
                         } else if (val == '中转站') {
@@ -896,7 +904,7 @@
                     pageNum: 0
                 }).then(res => {
                     console.log(res)
-                    if (res.code == 200) {
+                    if (res.status == 200) {
                         this.sendNameOptions = res.data.content
                     }
                 })
@@ -917,7 +925,7 @@
                     pageSize: 0,
                     pageNum: 0
                 }).then(res => {
-                    if (res.code == 200) {
+                    if (res.status == 200) {
                         this.receiveNameOptions = res.data.content
                     }
                 })
@@ -939,7 +947,7 @@
                         destination: this.addForm.outstation
                     }).then(res => {
                         console.log(res)
-                        if (res.code == 200) {
+                        if (res.status == 200) {
                             this.flightOptions = res.data
                         }
                     })
@@ -1010,7 +1018,7 @@
                     airFight: flightCompany
                 }).then(res => {
                     console.log(res)
-                    if (res.code == 200) {
+                    if (res.status == 200) {
                         this.goodsInfoOptions = res.data
                     }
                 })
@@ -1022,7 +1030,8 @@
                 this.$api.tAviationnum.viewDetail({
                     aviationnum: val
                 }).then(res => {
-                    if (res.code == 200) {
+                    console.log(res)
+                    if (res.status == 200) {
                         this.addForm = Object.assign({}, res.data)
                         if (res.data.cargoTable != null && res.data.cargoTable != undefined) {
                             for (var i = 0; i < res.data.cargoTable.length; i++) {
@@ -1065,15 +1074,13 @@
                             status: row.status,
                             carrier: Cookies.get('user')
                         }).then(res => {
-                            if (res.code == 200) {
+                            if (res.status == 200) {
                                 console.log(this.activeName)
                                 if (this.activeName == 'used') {
                                     this.refreshUsedData()
                                 } else {
                                     this.refreshData('invalid')
                                 }
-                            } else {
-                                this.$message.warning(res.msg)
                             }
                         })
                     }).catch(() => {
@@ -1088,14 +1095,12 @@
                         status: row.status,
                         carrier: Cookies.get('user')
                     }).then(res => {
-                        if (res.code == 200) {
+                        if (res.status == 200) {
                             if (this.activeName == 'used') {
                                 this.refreshUsedData()
                             } else {
                                 this.refreshData('invalid')
                             }
-                        } else {
-                            this.$message.warning(res.msg)
                         }
                     })
                 } else if (row.status == '0') {
@@ -1127,6 +1132,7 @@
             }
         },
         makeForm() {  //制单，获取暂存数据
+            this.goodtype=''
             this.formFlag = 0
             this.addForm = {}
             this.cargoTableData = []
@@ -1141,7 +1147,7 @@
             this.addForm.place = Cookies.get('dep')
             this.$api.tAviationnum.getStagingData().then(res => {
                 console.log(res)
-                if (res.code == 200) {
+                if (res.status == 200) {
                     if (res.data != null) {
                         this.stagingFlag = 1
                         this.aviationnumOptions = [] // 存在暂存数据的时候，必须先处理暂存数据，下拉列表置空，不可选别的单号
@@ -1165,7 +1171,7 @@
                             this.$api.goods.searchGoods({//获取货物列表
                                 airFight: flightCompany
                             }).then(res => {
-                                if (res.code == 200) {
+                                if (res.status == 200) {
                                     this.goodsInfoOptions = res.data
                                 }
                             })
@@ -1173,9 +1179,8 @@
                         }
                     } else {
                         this.stagingFlag = 0
+                        this.addCargoTable()
                     }
-                } else {
-                    this.$message.error("获取暂存数据失败！")
                 }
                 this.dialogVisible = true;
             })
@@ -1193,7 +1198,7 @@
                 pageNum: this.usedCurrentPage
             }).then(res => {
                 console.log(res)
-                if (res.code == 200) {
+                if (res.status == 200) {
                     this.usedTable = res.data.content
                     this.usedTotal = res.data.totalSize
                 }
@@ -1206,7 +1211,7 @@
                 pageNum: val == 'invalid' ? this.invalidCurrentPage : this.notUsedCurrentPage
             }).then(res => {
                 console.log(res)
-                if (res.code == 200) {
+                if (res.status == 200) {
                     if (val == 'invalid') {
                         this.invalidTable = res.data.content
                         this.invalidTotal = res.data.totalSize
@@ -1223,15 +1228,13 @@
                     this.$confirm('确认提交吗？', '提示', {}).then(() => {
                         let params = Object.assign({}, this.dataForm)
                         this.$api.tAviationnum.save(params).then((res) => {
-                            if (res.code == 200) {
+                            if (res.status == 200) {
                                 this.$message({message: '操作成功', type: 'success'})
                                 this.$refs['dataForm'].resetFields()
                                 this.singleDialogVisible = false
                                 this.activeName = 'not_used'
                                 this.refreshData('not_used')
                                 this.getAviationnumOptions()
-                            } else {
-                                this.$message({message: '操作失败, ' + res.msg, type: 'error'})
                             }
                         })
                     })
@@ -1250,12 +1253,13 @@
             this.addForm.cargoTable = this.cargoTableData
             this.$refs[formval].validate((valid) => {
                 const that = this
+                console.log(valid)
                 if (valid) {
                     if (val == 'invalid') {
                         this.invalidReasonDialogVisible = true
                     } else {
                         this.$api.tAviationnum.savetAviation(this.addForm).then(res => {
-                            if (res.code == 200) {
+                            if (res.status == 200) {
                                 that.$message({message: '操作成功', type: 'success'})
                                 that.refreshUsedData()
                                 that.refreshData("invalid")
@@ -1267,8 +1271,6 @@
                                     that.getCurrentTime()
                                     that.dialogVisible = false
                                 }
-                            } else {
-                                that.$message.error(res.msg)
                             }
                         })
                     }
@@ -1276,38 +1278,43 @@
                 }
             })
         },
-        submitFormInvalid() {
-            this.addForm.weightcharge = 0
-            console.log(this.addForm)
-            if (this.stagingFlag == 0) {
-                this.$api.tAviationnum.savetAviation(this.addForm).then(res => {
-                    console.log(res)
-                    if (res.code == 200) {
-                        this.$message({message: '操作成功', type: 'success'})
-                        this.refreshUsedData()
-                        this.refreshData("invalid")
-                        this.refreshData("not_used")
-                        this.invalidReasonDialogVisible = false
-                        this.dialogVisible = false
-                        this.$refs['addForm'].resetFields()
+        submitFormInvalid(formval) {
+                this.$refs[formval].validate((valid) => {
+                    if(valid){
+                        this.addForm.cancelreason=this.invalidForm.cancelreason
+                        this.addForm.invalidcharge=this.invalidForm.invalidcharge
+                        this.addForm.weightcharge=0
+                        if (this.stagingFlag == 0 && this.formFlag==0) {
+                            this.$api.tAviationnum.savetAviation(this.addForm).then(res => {
+                                console.log(res)
+                                if (res.status == 200) {
+                                    this.$message({message: '操作成功', type: 'success'})
+                                    this.refreshUsedData()
+                                    this.refreshData("invalid")
+                                    this.refreshData("not_used")
+                                    this.invalidReasonDialogVisible = false
+                                    this.dialogVisible = false
+                                    this.$refs['addForm'].resetFields()
+                                    this.$refs[formval].resetFields()
+                                }
+                            })
+                        } else {
+                            this.$api.tAviationnum.editSubmittAviation(this.addForm).then(res => {
+                                console.log(res)
+                                if (res.status == 200) {
+                                    this.$message({message: '操作成功', type: 'success'})
+                                    this.refreshUsedData()
+                                    this.refreshData("invalid")
+                                    this.refreshData("not_used")
+                                    this.invalidReasonDialogVisible = false
+                                    this.dialogVisible = false
+                                    this.$refs['addForm'].resetFields()
+                                    this.$refs[formval].resetFields()
+                                }
+                            })
+                        }
                     }
                 })
-            } else {
-                this.$api.tAviationnum.editSubmittAviation(this.addForm).then(res => {
-                    console.log(res)
-                    if (res.code == 200) {
-                        this.$message({message: '操作成功', type: 'success'})
-                        this.refreshUsedData()
-                        this.refreshData("invalid")
-                        this.refreshData("not_used")
-                        this.invalidReasonDialogVisible = false
-                        this.dialogVisible = false
-                        this.$refs['addForm'].resetFields()
-                    } else {
-                        this.$message.error(res.msg)
-                    }
-                })
-            }
         },
         editSubmit(formval, val, e) {
             if (val == 'staging') {
@@ -1323,11 +1330,11 @@
             this.$refs[formval].validate((valid) => {
                 const that = this
                 if (valid) {
-                    if (val == 'invalid' && this.formFlag == 0) {
+                    if ((val == 'invalid' && this.formFlag == 0)||(val == 'invalid' && this.formFlag == 1)) {
                         this.invalidReasonDialogVisible = true
                     } else {
                         this.$api.tAviationnum.editSubmittAviation(this.addForm).then(res => {
-                            if (res.code == 200) {
+                            if (res.status == 200) {
                                 that.$message({message: '操作成功', type: 'success'})
                                 that.refreshUsedData()
                                 that.refreshData("invalid")
@@ -1339,8 +1346,6 @@
                                     that.getCurrentTime()
                                     that.dialogVisible = false
                                 }
-                            } else {
-                                that.$message.error(res.msg)
                             }
                         })
                     }
@@ -1369,6 +1374,7 @@
             共选择了 ${files.length + fileList.length} 个文件`);
         },
         getFinalRatio() {
+                console.log(this.goodtype)
             if (this.addForm.sendname != '' && this.addForm.sendname != undefined
                 && this.goodtype != ''
                 && this.addForm.flight != '' && this.addForm.flight != undefined
@@ -1380,22 +1386,27 @@
                     chargeWeight: this.addForm.weightall
                 }).then(res => {
                     console.log(res)
-                    if (res.code == 200) {
+                    if (res.status == 200) {
                         if (res.data.length > 0) {
                             this.finalRatio = res.data[0].ratio
-                            this.addForm.weightcharge = Number(this.addForm.weightall * this.finalRatio).toFixed(2)
+                            const airfreightall=Number(this.addForm.weightall * this.finalRatio).toFixed(2)
                             // this.$set(this.addForm,'weightcharge',Number(this.addForm.weightall * this.finalRatio).toFixed(2))
+                            if(this.addForm.delflag!=undefined&&this.addForm.delflag==2){
+                                this.addForm.weightcharge=0
+                            }else {
+                                this.addForm.weightcharge=airfreightall
+                            }
                             this.addForm = Object.assign({}, this.addForm)
                             this.addForm.total = Number(this.addForm.otherallcharges) + Number(this.addForm.weightcharge) + Number(this.addForm.makingcharge) + Number(this.addForm.invalidcharge)
                             for (let i = 0; i < this.cargoTableData.length; i++) {//费率变化--航空运费改变
                                 this.cargoTableData[i].rate = res.data[0].ratio
                                 this.cargoTableData[i].weightall = this.addForm.weightall
-                                this.cargoTableData[i].airfreightall = this.addForm.weightcharge
+                                this.cargoTableData[i].airfreightall = airfreightall
                             }
                         } else {
                             this.$message.warning("当前无匹配费率，请重新选择！")
                             this.finalRatio = 0
-                            this.addForm.weightcharge = Number(this.addForm.weightall * this.finalRatio).toFixed(2)
+                            this.addForm.weightcharge = 0
                             this.addForm = Object.assign({}, this.addForm)
                             this.addForm.total = Number(this.addForm.otherallcharges) + Number(this.addForm.weightcharge) + Number(this.addForm.makingcharge) + Number(this.addForm.invalidcharge)
                             for (var i = 0; i < this.cargoTableData.length; i++) {
@@ -1404,7 +1415,6 @@
                                 this.cargoTableData[i].airfreightall = 0
                             }
                         }
-
                     }
                 })
             } else {
@@ -1447,76 +1457,50 @@
                 if (this.addForm.weightall != weightOldValue) {
                     this.getFinalRatio()
                 }
-                this.addForm.weightcharge = Number(this.addForm.weightall * this.finalRatio).toFixed(2)
+                const airfreightall=Number(this.addForm.weightall * this.finalRatio).toFixed(2)
+                if(this.addForm.delflag!=undefined&&this.addForm.delflag==2){
+                    this.addForm.weightcharge=0
+                }else {
+                    this.addForm.weightcharge=airfreightall
+                }
                 this.addForm = Object.assign({}, this.addForm)
                 for (let i = 0; i < this.cargoTableData.length; i++) {//给每条数据记录总航空费用
                     this.cargoTableData[i].weightall = this.addForm.weightall
-                    this.cargoTableData[i].airfreightall = this.addForm.weightcharge
+                    this.cargoTableData[i].airfreightall = airfreightall
                 }
-            }
-        ,
+            },
             immediate: true,
-                deep
-        :
-            true
-        }
-    ,
-        'addForm.weightcharge'
-    :
-        {
-            handler(newvalue, oldvalue)
-            {
+            deep: true
+        },
+        'addForm.weightcharge': {
+            handler(newvalue, oldvalue) {
                 this.addForm.total = Number(this.addForm.otherallcharges) + Number(this.addForm.weightcharge) + Number(this.addForm.makingcharge) + Number(this.addForm.invalidcharge)
-            }
-        ,
+            },
             immediate: true,
-                deep
-        :
-            true
-        }
-    ,
-        'addForm.otherallcharges'
-    :
-        {
-            handler(newvalue, oldvalue)
-            {
+            deep: true
+        },
+        'addForm.otherallcharges': {
+            handler(newvalue, oldvalue) {
                 this.addForm.total = Number(this.addForm.otherallcharges) + Number(this.addForm.weightcharge) + Number(this.addForm.makingcharge) + Number(this.addForm.invalidcharge)
-            }
-        ,
+            },
             immediate: true,
-                deep
-        :
-            true
-        }
-    ,
-        'addForm.makingcharge'
-    :
-        {
-            handler(newvalue, oldvalue)
-            {
+            deep: true
+        },
+        'addForm.makingcharge': {
+            handler(newvalue, oldvalue) {
                 this.addForm.total = Number(this.addForm.otherallcharges) + Number(this.addForm.weightcharge) + Number(this.addForm.makingcharge) + Number(this.addForm.invalidcharge)
-            }
-        ,
+            },
             immediate: true,
-                deep
-        :
-            true
-        }
-    ,
-        'addForm.invalidcharge'
-    :
-        {
-            handler(newvalue, oldvalue)
-            {
+            deep: true
+        },
+        'addForm.invalidcharge': {
+            handler(newvalue, oldvalue) {
                 this.addForm.total = Number(this.addForm.otherallcharges) + Number(this.addForm.weightcharge)
                     + Number(this.addForm.makingcharge) + Number(this.addForm.invalidcharge)
-            }
-        ,
+            },
             immediate: true,
-                deep
-        :
-            true
-        }
+            deep: true
+        },
     }
     };
 </script>
@@ -1623,10 +1607,6 @@
     }
   }
 
-  #descr_Form > > > .el-form-item__label {
-    font-size: 12px;
-  }
-
   .prefixStyle {
     color: #333333;
     width: 60px;
@@ -1683,6 +1663,14 @@
 
   .makeFormStyle /deep/ .el-input.is-disabled .el-input__inner {
     color: #606266;
+    border:1px solid #9e9e9eb5
+  }
+
+  .makeFormStyle /deep/ .el-input__inner {
+    border:1px solid #9e9e9eb5
+  }
+  .makeFormStyle /deep/ .el-form-item.is-error .el-input__inner{
+    border-color:#F56C6C
   }
 
   .col_header {
@@ -1751,12 +1739,12 @@
 
   .normal_circle {
     position: absolute;
-    right: 100px;
+    right: 180px;
     top: 60px;
-    width: 40px;
-    height: 15px;
+    width: 32px;
+    height: 10px;
     line-height: 15px;
-    padding: 25px;
+    padding: 15px;
     color: #fff;
     font-weight: bold;
     text-align: center;
@@ -1764,19 +1752,19 @@
     border-radius: 50%;
     background-color: #5acc9b;
     background-position: right bottom;
-    box-shadow: 0 0 0 2px #ffffff, 0 0 0 8px #5acc9b, 0 0 0 25px #fff, 0 0 0 27px #8fddbb, 0 0 0 32px #fff, 0 0 0 34px #dbf4ea;
-    font-size: 20px;
+    box-shadow: 0 0 0 1px #ffffff, 0 0 0 6px #5acc9b, 0 0 0 24px #fff, 0 0 0 26px #8fddbb, 0 0 0 30px #fff, 0 0 0 32px #dbf4ea;
+    font-size: 16px;
     transform: rotate(-45deg);
   }
 
   .invalid_circle {
     position: absolute;
-    right: 100px;
+    right: 180px;
     top: 60px;
-    width: 40px;
-    height: 15px;
+    width: 32px;
+    height: 10px;
     line-height: 15px;
-    padding: 25px;
+    padding: 15px;
     color: #fff;
     font-weight: bold;
     text-align: center;
@@ -1784,8 +1772,8 @@
     border-radius: 50%;
     background-color: #f44336;
     background-position: right bottom;
-    box-shadow: 0 0 0 2px #ffffff, 0 0 0 8px #f44336, 0 0 0 25px #fff, 0 0 0 27px #f44336d4, 0 0 0 32px #fff, 0 0 0 34px #f44336b3;
-    font-size: 20px;
+    box-shadow: 0 0 0 1px #ffffff, 0 0 0 6px #f44336, 0 0 0 24px #fff, 0 0 0 26px #f44336d4, 0 0 0 30px #fff, 0 0 0 32px #ff57227d;
+    font-size: 16px;
     transform: rotate(-45deg);
   }
 </style>

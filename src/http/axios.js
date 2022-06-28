@@ -2,9 +2,18 @@ import axios from 'axios';
 import config from './config';
 import Cookies from "js-cookie";
 import router from '@/router'
+import { MessageBox,Message } from 'element-ui'
+
+import Vue from 'vue'
+import el from "element-ui/src/locale/lang/el";
 
 // 使用vuex做全局loading时使用
 // import store from '@/store'
+function popMsg(msg){
+  bus.$notify.error({
+    message:msg
+  })
+}
 
 export default function $axios(options) {
   return new Promise((resolve, reject) => {
@@ -14,7 +23,6 @@ export default function $axios(options) {
       timeout: config.timeout,
       withCredentials: config.withCredentials
     })
-
     // request 拦截器 这里是封装的拦截器
     instance.interceptors.request.use(
       config => {
@@ -77,7 +85,24 @@ export default function $axios(options) {
         if (response.data == undefined) {
           data = JSON.parse(response.request.responseText)
         } else {
-          data = response.data
+          console.log(response.data)
+          if(response.data.status=='200'){
+            data = response.data
+          }else if(response.data.status=='500'){
+            let msginfo='系统内部错误！'
+            if(response.data.msg!=undefined){
+              msginfo=response.data.msg
+            }
+            Message({
+              message:msginfo,
+              type: 'error'
+            })
+          }else{
+            Message({
+              message:response.data.msg,
+              type: 'error'
+            })
+          }
         }
 
         // 根据返回的code值来做不同的处理

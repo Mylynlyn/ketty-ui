@@ -42,7 +42,11 @@
           {{returnWeightClass(scope.row.weightclass)}}
         </template>
       </el-table-column>
-      <el-table-column label="费率" prop="ratio" width="80px"></el-table-column>
+      <el-table-column label="费率" prop="ratio" width="80px">
+        <template slot-scope="scope">
+          {{Number(scope.row.ratio).toFixed(1)}}
+        </template>
+      </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
           <kt-button type="text" :size="size" icon="el-icon-edit" @click="editInfo(scope.$index,scope.row)"
