@@ -3,7 +3,7 @@
     <div class="toolbar" style="float:left;padding-top:10px;">
       <el-form :inline="true" :size="size">
         <el-form-item>
-          <el-input v-model="keywords" placeholder=""></el-input>
+          <el-input v-model="keywords" placeholder="航班号"></el-input>
         </el-form-item>
         <el-form-item>
           <kt-button icon="fa fa-search" :label="$t('action.search')" perms="data:flight:search" type="primary"
@@ -31,7 +31,7 @@
       </el-form>
     </div>
     <el-table :data="tableData" :size="size" :cell-style="{padding:'3px 0'}" max-height="480"
-              :header-cell-style="{background:'#EEEEEE',color:'#606266'}">
+              :header-cell-style="{background:'#EEEEEE',color:'#606266'}" v-loading="tableLoading" :element-loading-text="$t('action.loading')">
       <el-table-column type="index" :index="returnIndex" label="序号" width="60"></el-table-column>
       <template v-for="item in headers">
         <el-table-column :label="item.label" :prop="item.prop" :min-width="item.minwidth" show-overflow-tooltip>
@@ -84,6 +84,7 @@
         },
         data() {
             return {
+                tableLoading:false,
                 size: 'small',
                 keywords: '',
                 tableData: [],
@@ -149,6 +150,7 @@
         },
         methods: {
             returnList() {
+                this.tableLoading=true
                 const columnFilter={
                     keywords:{name:'keywords',value:this.keywords},
                 }
@@ -161,6 +163,7 @@
                     if(res.code==200){
                         this.tableData=res.data.content
                         this.total=res.data.totalSize
+                        this.tableLoading=false
                     }
                 })
             },

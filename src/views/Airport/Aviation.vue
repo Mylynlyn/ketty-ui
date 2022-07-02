@@ -21,6 +21,7 @@
           >
           </el-date-picker>
         </el-form-item>
+        <kt-button label="导出" icon='fa fa-cloud-download' perms="air:num:export" type="primary" @click="exportExcel"/>
       </el-form>
     </div>
     <div class="tabs">
@@ -36,7 +37,7 @@
         </el-tab-pane>
       </el-tabs>
       <div class="btn">
-        <kt-button label="单号导入" perms="air:num:add" type="primary" @click="singleDialogVisible=true"/>
+        <kt-button label="单号导入" perms="air:num:add" type="primary" @click="singleDialogVisible=true" style="margin-left:0px"/>
         <el-upload
           accept=".xls, .xlsx"
           action='http://39.105.37.45:8001/tAviationnum/importExcel'
@@ -535,6 +536,7 @@
         },
         data() {
             return {
+                mincharge:0,
                 invalidForm:{},
                 stagingFlag: 0,//记录是否存在暂存数据，0不存在，1存在
                 formFlag: 0,// 0为制单，1为已使用的编辑，2为作废的编辑，3为作废的查看，4为已使用的查看
@@ -856,12 +858,12 @@
                     pageSize: 0,
                     pageNum: 0
                 }).then(res => {
-                    if (res.code == 200) {
+                    if (res.status == 200) {
                         this.aviationnumOptions = res.data.content
                     }
                 })
             },
-            changeDeliveryStation(val) {//改变交货运站--影响第一承运，获取货物信息表
+            changeDeliveryStation(val) {//改变交货运站--影响第一承运，获取货物信息表，影响始发站，进而影响航班列表
                 this.addForm.deliverystation = val[1]
                 if (val[0] == '东航') {
                     this.addForm.firstcarrier = 'MU'
@@ -873,14 +875,10 @@
                 } else if (val[1].indexOf('首都') > -1) {
                     this.addForm.startstation = "北京首都"
                 }
-                this.$api.goods.searchGoods({
-                    airFight: val[0]
-                }).then(res => {
-                    console.log(res)
-                    if (res.status == 200) {
-                        this.goodsInfoOptions = res.data
-                    }
-                })
+                this.flightOptions=[]
+                this.addForm.flight=''
+                this.getFlightOptions()
+                this.getGoodInfoOptions(val[0])
             },
             getStationOptions(val) {//获取三类站点
                 this.$api.transfer.searchInfos({
@@ -941,6 +939,8 @@
                 console.log(this.addForm.receivename)
             },
             getFlightOptions() {//获取筛选后的航班号列表
+                this.flightOptions=[]
+                this.addForm.flight=''
                 if (this.addForm.startstation != '' && this.addForm.startstation != undefined && this.addForm.outstation != '' && this.addForm.outstation != undefined) {
                     this.$api.flight.searchFlightList({
                         startStation: this.addForm.startstation,
@@ -954,12 +954,13 @@
                 }
             },
             selectFlight(val) {//选定航班，关联班次,获取费率
+                this.$forceUpdate()
                 for (let i = 0; i < this.flightOptions.length; i++) {
                     if (this.flightOptions[i].flight == val) {
                         this.addForm.flightnum = this.flightOptions[i].flightnum
                     }
                 }
-                this.getFinalRatio()
+                this.getMinChargeAndRatio()
             },
             changeGoodNum(val) {//商品代码改变，关联运价种类，获取费率
                 this.goodnum = val
@@ -1014,14 +1015,7 @@
                     this.goodtype = this.cargoTableData[0].rateclass
                     this.getFinalRatio()
                 }
-                this.$api.goods.searchGoods({//获取货物列表
-                    airFight: flightCompany
-                }).then(res => {
-                    console.log(res)
-                    if (res.status == 200) {
-                        this.goodsInfoOptions = res.data
-                    }
-                })
+                this.getGoodInfoOptions(flightCompany)
                 this.getFlightOptions()//获取航班列表
             },
             getInvalidDetail(val) {// 获取作废单号的数据
@@ -1168,13 +1162,7 @@
                                 this.goodtype = this.cargoTableData[0].rateclass
                                 this.getFinalRatio()
                             }
-                            this.$api.goods.searchGoods({//获取货物列表
-                                airFight: flightCompany
-                            }).then(res => {
-                                if (res.status == 200) {
-                                    this.goodsInfoOptions = res.data
-                                }
-                            })
+                            this.getGoodInfoOptions(flightCompany)
                             this.getFlightOptions()//获取航班列表
                         }
                     } else {
@@ -1284,6 +1272,7 @@
                         this.addForm.cancelreason=this.invalidForm.cancelreason
                         this.addForm.invalidcharge=this.invalidForm.invalidcharge
                         this.addForm.weightcharge=0
+                        this.addForm.otherallcharges=0
                         if (this.stagingFlag == 0 && this.formFlag==0) {
                             this.$api.tAviationnum.savetAviation(this.addForm).then(res => {
                                 console.log(res)
@@ -1373,8 +1362,40 @@
             } 个文件，
             共选择了 ${files.length + fileList.length} 个文件`);
         },
+            getGoodInfoOptions(val) {
+                this.$api.goods.searchGoods({//获取货物列表
+                    airFight: val
+                }).then(res => {
+                    console.log(res)
+                    if (res.status == 200) {
+                        this.goodsInfoOptions = res.data
+                    }
+                })
+            },
         getFinalRatio() {
-                console.log(this.goodtype)
+            if(this.addForm.outstation!=undefined&&this.addForm.outstation!=''
+                &&this.addForm.deliverystationArray!=undefined && this.addForm.deliverystationArray.length!=0
+                &&this.addForm.flight!=undefined&&this.addForm.flight!=''
+                &&this.goodtype!=''){
+                this.$api.mincharges.searchInfos({
+                    destinationstation:this.addForm.outstation,
+                    flightcompany: this.addForm.deliverystationArray[0],
+                    flight:this.addForm.flight,
+                    rateclass:this.goodtype
+                }).then(res=>{
+                    console.log(res)
+                    if(res.status==200){
+                        if(res.data.length>0){
+                            this.mincharge=res.data[0].mincharge
+                            console.log(this.mincharge)
+                        }else{
+                            this.mincharge=0
+                        }
+                    }
+                })
+            }else{
+                this.mincharge=0
+            }
             if (this.addForm.sendname != '' && this.addForm.sendname != undefined
                 && this.goodtype != ''
                 && this.addForm.flight != '' && this.addForm.flight != undefined
@@ -1385,19 +1406,24 @@
                     flightNum: this.addForm.flight,
                     chargeWeight: this.addForm.weightall
                 }).then(res => {
-                    console.log(res)
                     if (res.status == 200) {
                         if (res.data.length > 0) {
                             this.finalRatio = res.data[0].ratio
                             const airfreightall=Number(this.addForm.weightall * this.finalRatio).toFixed(2)
-                            // this.$set(this.addForm,'weightcharge',Number(this.addForm.weightall * this.finalRatio).toFixed(2))
                             if(this.addForm.delflag!=undefined&&this.addForm.delflag==2){
                                 this.addForm.weightcharge=0
+                                this.addForm.otherallcharges=0
                             }else {
-                                this.addForm.weightcharge=airfreightall
+                                if(this.finalRatio==0){
+                                    this.addForm.weightcharge=0
+                                }else {
+                                    console.log(this.mincharge)
+                                    console.log(airfreightall)
+                                    this.addForm.weightcharge=Number(this.mincharge)>Number(airfreightall)?Number(this.mincharge):Number(airfreightall)
+                                    console.log(this.addForm.weightcharge)
+                                }
                             }
                             this.addForm = Object.assign({}, this.addForm)
-                            this.addForm.total = Number(this.addForm.otherallcharges) + Number(this.addForm.weightcharge) + Number(this.addForm.makingcharge) + Number(this.addForm.invalidcharge)
                             for (let i = 0; i < this.cargoTableData.length; i++) {//费率变化--航空运费改变
                                 this.cargoTableData[i].rate = res.data[0].ratio
                                 this.cargoTableData[i].weightall = this.addForm.weightall
@@ -1408,7 +1434,6 @@
                             this.finalRatio = 0
                             this.addForm.weightcharge = 0
                             this.addForm = Object.assign({}, this.addForm)
-                            this.addForm.total = Number(this.addForm.otherallcharges) + Number(this.addForm.weightcharge) + Number(this.addForm.makingcharge) + Number(this.addForm.invalidcharge)
                             for (var i = 0; i < this.cargoTableData.length; i++) {
                                 this.cargoTableData[i].rate = 0
                                 this.cargoTableData[i].weightall = this.addForm.weightall
@@ -1421,7 +1446,105 @@
                 this.finalRatio = 0
             }
             return this.finalRatio
-        }
+        },
+            getMinChargeAndRatio() {
+                if (this.addForm.sendname != '' && this.addForm.sendname != undefined
+                    && this.goodtype != ''
+                    && this.addForm.flight != '' && this.addForm.flight != undefined
+                    && this.addForm.weightall != '' && this.addForm.weightall != undefined) {
+                    this.$api.ratio.getRatio({
+                        sendName: this.addForm.sendname,
+                        rateClass: this.goodtype,
+                        flightNum: this.addForm.flight,
+                        chargeWeight: this.addForm.weightall
+                    }).then(res => {
+                        if (res.status == 200) {
+                            if (res.data.length > 0) {
+                                this.finalRatio = res.data[0].ratio
+                                const airfreightall=Number(this.addForm.weightall * this.finalRatio).toFixed(2)
+                                if(this.addForm.delflag!=undefined&&this.addForm.delflag==2){
+                                    this.addForm.weightcharge=0
+                                    this.addForm.otherallcharges=0
+                                }else {
+                                    if(this.finalRatio==0){
+                                        this.addForm.weightcharge=0
+                                    }else {
+                                        if(this.addForm.outstation!=undefined&&this.addForm.outstation!=''
+                                            &&this.addForm.deliverystationArray!=undefined && this.addForm.deliverystationArray.length!=0
+                                            &&this.addForm.flight!=undefined&&this.addForm.flight!=''
+                                            &&this.goodtype!=''){
+                                            this.$api.mincharges.searchInfos({
+                                                destinationstation:this.addForm.outstation,
+                                                flightcompany: this.addForm.deliverystationArray[0],
+                                                flight:this.addForm.flight,
+                                                rateclass:this.goodtype
+                                            }).then(res=>{
+                                                if(res.status==200){
+                                                    if(res.data.length>0){
+                                                        this.mincharge=res.data[0].mincharge
+                                                        this.addForm.weightcharge=Number(this.mincharge)>Number(airfreightall)?Number(this.mincharge):Number(airfreightall)
+                                                    }else{
+                                                        this.mincharge=0
+                                                    }
+                                                }
+                                            })
+                                        }else{
+                                            this.mincharge=0
+                                        }
+                                    }
+                                }
+                                this.addForm = Object.assign({}, this.addForm)
+                                for (let i = 0; i < this.cargoTableData.length; i++) {//费率变化--航空运费改变
+                                    this.cargoTableData[i].rate = res.data[0].ratio
+                                    this.cargoTableData[i].weightall = this.addForm.weightall
+                                    this.cargoTableData[i].airfreightall = airfreightall
+                                }
+                            } else {
+                                this.$message.warning("当前无匹配费率，请重新选择！")
+                                this.finalRatio = 0
+                                this.addForm.weightcharge = 0
+                                this.addForm = Object.assign({}, this.addForm)
+                                for (var i = 0; i < this.cargoTableData.length; i++) {
+                                    this.cargoTableData[i].rate = 0
+                                    this.cargoTableData[i].weightall = this.addForm.weightall
+                                    this.cargoTableData[i].airfreightall = 0
+                                }
+                            }
+                        }
+                    })
+                } else {
+                    this.finalRatio = 0
+                }
+            },
+            getMinCharge(){
+                if(this.addForm.outstation!=undefined&&this.addForm.outstation!=''
+                &&this.addForm.deliverystationArray!=undefined && this.addForm.deliverystationArray.length!=0
+                &&this.addForm.flight!=undefined&&this.addForm.flight!=''
+                &&this.goodtype!=''){
+                    this.$api.mincharges.searchInfos({
+                        destinationstation:this.addForm.outstation,
+                        flightcompany: this.addForm.deliverystationArray[0],
+                        flight:this.addForm.flight,
+                        rateclass:this.goodtype
+                    }).then(res=>{
+                        if(res.status==200){
+                            if(res.data.length>0){
+                                this.mincharge=res.data[0].mincharge
+                            }else{
+                                this.mincharge=0
+                            }
+                        }
+                    })
+                }else{
+                    this.mincharge=0
+                }
+            },
+            exportExcel(){
+                let date1=this.dateArray.length > 0 ? this.dateArray[0] : ''
+                let date2=this.dateArray.length > 0 ? this.dateArray[1] : ''
+                const url=`http://39.105.37.45:8001/tAviation/downloadExcel?token=${this.headers.token}&date1=${date1}&date2=${date2}`
+                window.location.href=url
+            }
     },
     mounted(){
         this.refreshUsedData()
@@ -1430,8 +1553,7 @@
     },
     watch: {
         cargoTableData: {
-            handler(newarr, oldarr)
-            { //
+            handler(newarr, oldarr) { //
                 this.addForm.rcpall = 0;//记录总件数
                 let weightOldValue = this.addForm.weightall
                 var weight_num = 0
@@ -1455,16 +1577,77 @@
                     this.addForm.weightall = 0
                 }
                 if (this.addForm.weightall != weightOldValue) {
-                    this.getFinalRatio()
+                    if(this.addForm.outstation!=undefined&&this.addForm.outstation!=''
+                        &&this.addForm.deliverystationArray!=undefined && this.addForm.deliverystationArray.length!=0
+                        &&this.addForm.flight!=undefined&&this.addForm.flight!=''
+                        &&this.goodtype!=''){
+                        this.$api.mincharges.searchInfos({
+                            destinationstation:this.addForm.outstation,
+                            flightcompany: this.addForm.deliverystationArray[0],
+                            flight:this.addForm.flight,
+                            rateclass:this.goodtype
+                        }).then(res=>{
+                            console.log(res)
+                            if(res.status==200){
+                                if(res.data.length>0){
+                                    this.mincharge=res.data[0].mincharge
+                                }else{
+                                    this.mincharge=0
+                                }
+                            }
+                        })
+                    }else{
+                        this.mincharge=0
+                    }
+                    if (this.addForm.sendname != '' && this.addForm.sendname != undefined
+                        && this.goodtype != ''
+                        && this.addForm.flight != '' && this.addForm.flight != undefined
+                        && this.addForm.weightall != '' && this.addForm.weightall != undefined) {
+                        this.$api.ratio.getRatio({
+                            sendName: this.addForm.sendname,
+                            rateClass: this.goodtype,
+                            flightNum: this.addForm.flight,
+                            chargeWeight: this.addForm.weightall
+                        }).then(res => {
+                            console.log(res)
+                            if (res.status == 200) {
+                                if (res.data.length > 0) {
+                                    this.finalRatio = res.data[0].ratio
+                                    const airfreight=Number(this.addForm.weightall * this.finalRatio).toFixed(2)
+                                    if(this.addForm.delflag!=undefined&&this.addForm.delflag==2){
+                                        this.addForm.weightcharge=0
+                                        this.addForm.otherallcharges=0
+                                    }else {
+                                        if(this.finalRatio==0){
+                                            this.addForm.weightcharge=0
+                                        }else {
+                                            this.addForm.weightcharge=Number(this.mincharge)>Number(airfreight)?Number(this.mincharge):Number(airfreight)
+                                        }
+                                    }
+                                    this.addForm = Object.assign({}, this.addForm)
+                                    for (let i = 0; i < this.cargoTableData.length; i++) {
+                                        this.cargoTableData[i].rate = res.data[0].ratio
+                                        this.cargoTableData[i].airfreightall = airfreight
+                                    }
+                                } else {
+                                    this.$message.warning("当前无匹配费率，请重新选择！")
+                                    this.finalRatio = 0
+                                    this.addForm.weightcharge = 0
+                                    this.addForm = Object.assign({}, this.addForm)
+                                    for (var i = 0; i < this.cargoTableData.length; i++) {
+                                        this.cargoTableData[i].rate = 0
+                                        this.cargoTableData[i].airfreightall = 0
+                                    }
+                                }
+                            }
+                        })
+                    } else {
+                        this.finalRatio = 0
+                    }
                 }
                 const airfreightall=Number(this.addForm.weightall * this.finalRatio).toFixed(2)
-                if(this.addForm.delflag!=undefined&&this.addForm.delflag==2){
-                    this.addForm.weightcharge=0
-                }else {
-                    this.addForm.weightcharge=airfreightall
-                }
                 this.addForm = Object.assign({}, this.addForm)
-                for (let i = 0; i < this.cargoTableData.length; i++) {//给每条数据记录总航空费用
+                for (let i = 0; i < this.cargoTableData.length; i++) {
                     this.cargoTableData[i].weightall = this.addForm.weightall
                     this.cargoTableData[i].airfreightall = airfreightall
                 }

@@ -3,7 +3,7 @@
     <div class="toolbar" style="float:left;padding-top:10px;">
       <el-form :inline="true"  :size="size">
         <el-form-item>
-          <el-input v-model="keywords" placeholder="站点名称"></el-input>
+          <el-input v-model="keywords" placeholder="航班"></el-input>
         </el-form-item>
         <el-form-item>
           <kt-button icon="fa fa-search" :label="$t('action.search')" perms="data:transfer:search" type="primary" @click="search"/>
@@ -13,7 +13,7 @@
         </el-form-item>
         <el-form-item>
           <el-upload accept=".xls, .xlsx"
-                     action='http://39.105.37.45:8001/allstations/importExcel'
+                     action='http://39.105.37.45:8001/tLowcost/importExcel'
                      :headers="uploadHeaders"
                      :file-list="fileList"
                      :on-success="fileSuccess"
@@ -58,17 +58,37 @@
     </div>
     <el-dialog :visible.sync="dialogVisible" :title="dialogTitle" width="30%" class="dialogStyle">
       <el-form :model="dataForm" ref="dataForm" :rules="dataFormRules" label-width="100px" :size="size">
-        <template v-for="item in formHeaders">
-          <el-form-item :label="item.label" :prop="item.prop">
-            <el-input v-model="dataForm[item.prop]"></el-input>
-          </el-form-item>
-        </template>
-        <el-form-item label="站点类型" prop="noteArr">
-          <el-select v-model="dataForm.noteArr" multiple placeholder="请选择" style="width:100%">
-          <template v-for="item in typeOptions">
-          <el-option :label="item.label" :value="item.label"></el-option>
-        </template>
+        <el-form-item label="目的站" prop="destinationstation">
+          <el-select v-model="dataForm.destinationstation" placeholder="请选择" style="width:100%" @change="changeDestination">
+            <template v-for="item in destinationOptions">
+              <el-option :label="item.stationName" :value="item.stationName"></el-option>
+            </template>
           </el-select>
+        </el-form-item>
+        <el-form-item label="航空公司" prop="flightcompany">
+          <el-select v-model="dataForm.flightcompany" placeholder="请选择" style="width:100%" @change="changeFlightCompany">
+            <template v-for="item in flightCompanyOptions">
+              <el-option :label="item.label" :value="item.label"></el-option>
+            </template>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="航班" prop="flight">
+          <el-select v-model="dataForm.flight" placeholder="请选择" style="width:100%" @change="changeFlight">
+            <template v-for="item in flightOptions">
+              <el-option :label="item.flightNum" :value="item.flightNum"></el-option>
+            </template>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="货品" prop="rateclass">
+          <el-select v-model="dataForm.rateclass" placeholder="请选择" style="width:100%" @change="changeGoodtype">
+            <template v-for="item in goodtypeOptions">
+              <el-option :label="item.goodtype" :value="item.goodtype"></el-option>
+            </template>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="最低收费值" prop="mincharge">
+          <el-input v-model="dataForm.mincharge">
+          </el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -94,18 +114,15 @@
                 keywords:'',
                 tableData:[],
                 headers:[
-                    {label:'站点名称',prop:'stationname'},
-                    {label:'站点缩写',prop:'stationnameabb'},
-                    {label:'站点类型',prop:'note'}
+                    {label:'目的站',prop:'destinationstation'},
+                    {label:'航空公司',prop:'flightcompany'},
+                    {label:'航班',prop:'flight'},
+                    {label:'货品',prop:'rateclass'},
+                    {label:'最低收费值',prop:'mincharge'}
                 ],
                 currentPage:1,
                 pageSize:10,
                 total:0,
-                formHeaders:[
-                    {label:'站点名称',prop:'stationname'},
-                    {label:'站点缩写',prop:'stationnameabb'}
-                ],
-
                 dialogVisible:false,
                 dialogTitle:'',
                 dataForm:{
@@ -115,17 +132,21 @@
                     note:''
                 },
                 dataFormRules:{
-                    stationname:[{required:true,message:'请输入站点名称',trigger:'blur'}],
-                    stationnameabb:[{required:true,message:'请输入站点缩写',trigger:'blur'}],
-                   noteArr:[{required:true,message:'请选择站点类型',trigger:'blur'}]
+                    destinationstation:[{required:true,message:'请输入站点名称',trigger:'blur'}],
+                    flightcompany:[{required:true,message:'请选择航空公司',trigger:'blur'}],
+                    flight:[{required:true,message:'请选择航班',trigger:'blur'}],
+                    rateclass:[{required:true,message:'请选择货品',trigger:'blur'}],
+                    mincharge:[{required:true,message:'请输入最低收费值',trigger:'blur'}]
                 },
-                typeOptions:[
-                    {label:'始发站'},
-                    {label:'目的站'},
-                    {label:'中转站'}
-                ],
                 uploadHeaders: {token: Cookies.get('token')},
-                fileList: []
+                fileList: [],
+                destinationOptions:[],
+                flightCompanyOptions:[
+                    {label:'东航'},
+                    {label:'南航'}
+                ],
+                flightOptions:[],
+                goodtypeOptions:[],
             }
         },
         mounted(){
@@ -137,7 +158,7 @@
                 const columnFilter={
                     keywords:{name:'keywords',value:this.keywords},
                 }
-                this.$api.transfer.getInfos({
+                this.$api.mincharges.getInfos({
                     columnFilters:columnFilter,
                     pageSize:this.pageSize,
                     pageNum:this.currentPage
@@ -166,13 +187,15 @@
                 return (this.currentPage-1)*this.pageSize+val+1
             },
             addInfo(){
+                this.getDestinationOptions()
                 this.dialogTitle='新增'
                 this.dialogVisible=true
             },
             editInfo(index,row){
-                row.noteArr=row.note.split(',')
                 this.dataForm = Object.assign({}, row)
-                console.log(this.dataForm)
+                this.getDestinationOptions()
+                this.getGoodtypeOptions()
+                this.getFlightOptions()
                 this.dialogTitle='编辑'
                 this.dialogVisible=true
             },
@@ -182,7 +205,7 @@
                     cancelButtonText:"取消",
                     type:'warning'
                 }).then(()=>{
-                    this.$api.transfer.deleteInfos([{
+                    this.$api.mincharges.deleteInfos([{
                         id:row.id
                     }]).then(res=>{
                         if(res.code==200){
@@ -204,11 +227,10 @@
                 }else{
                     this.dataForm.lastupdateby=user
                 }
-                this.dataForm.note=this.dataForm.noteArr.join(',')
                 this.$refs[val].validate((valid)=>{
                     const that = this
                     if(valid){
-                        this.$api.transfer.submitInfos(this.dataForm).then(res=>{
+                        this.$api.mincharges.submitInfos(this.dataForm).then(res=>{
                             if(res.code==200){
                                 that.dialogVisible=false
                                 that.$message.success("提交成功！")
@@ -219,19 +241,58 @@
                     }
                 })
             },
-            returnStationType(val){
-                var arr= val.split(',');
-                return arr
+            getDestinationOptions(){
+                this.$api.transfer.searchInfos({
+                    note: '目的站'
+                }).then(res => {
+                    console.log(res)
+                    if (res.status == 200) {
+                        this.destinationOptions = res.data
+                    }
+                })
             },
-            returnNoteString(index,row){
-                let notes=''
-                if(row.note!=null){
-                   notes=row.note.join(',')
+            changeFlightCompany(){
+                this.dataForm.rateclass=''
+                this.dataForm.flight=''
+                this.getFlightOptions()
+                this.getGoodtypeOptions()
+            },
+            getGoodtypeOptions(){
+                this.$api.goods.searchGoods({
+                    airFight: this.dataForm.flightcompany
+                }).then(res => {
+                    console.log(res)
+                    if (res.status == 200) {
+                        this.goodtypeOptions = res.data
+                    }
+                })
+            },
+            changeGoodtype(val){
+                this.$forceUpdate()
+            },
+            changeFlight(val){
+                this.$forceUpdate()
+            },
+            getFlightOptions(){
+                if(this.dataForm.destinationstation!=undefined &&this.dataForm.destinationstation!=""
+                    &&this.dataForm.flightcompany!=undefined &&this.dataForm.flightcompany!="" ){
+                    this.$api.flight.returnDestinationList({
+                        flightName:this.dataForm.flightcompany,
+                        destination:this.dataForm.destinationstation
+                    }).then(res=>{
+                        console.log(res)
+                        if(res.status=='200'){
+                            this.flightOptions=res.data
+                        }
+                    })
                 }
-                return notes
+            },
+            changeDestination(){
+                this.dataForm.flight=''
+                this.getFlightOptions()
             },
             downloadTemplate(){
-                const url=`http://39.105.37.45:8001/allstations/download?token=${this.uploadHeaders.token}`
+                const url=`http://39.105.37.45:8001/tLowcost/download?token=${this.uploadHeaders.token}`
                 window.location.href=url
             },
             fileSuccess(res, file, fileList) {

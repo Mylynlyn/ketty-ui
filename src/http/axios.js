@@ -85,7 +85,6 @@ export default function $axios(options) {
         if (response.data == undefined) {
           data = JSON.parse(response.request.responseText)
         } else {
-          console.log(response.data)
           if(response.data.status=='200'){
             data = response.data
           }else if(response.data.status=='500'){

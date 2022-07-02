@@ -3,7 +3,7 @@
     <div class="toolbar" style="float:left;padding-top:10px;">
       <el-form :inline="true"  :size="size">
         <el-form-item>
-          <el-input v-model="keywords" placeholder="请输入"></el-input>
+          <el-input v-model="keywords" placeholder="货物类型"></el-input>
         </el-form-item>
         <el-form-item>
           <kt-button icon="fa fa-search" :label="$t('action.search')" perms="data:good:search" type="primary" @click="search"/>
@@ -28,7 +28,9 @@
         </el-form-item>
       </el-form>
     </div>
-    <el-table :data="tableData" :size="size" :cell-style="{padding:'3px 0'}" :header-cell-style="{background:'#EEEEEE',color:'#606266'}" max-height="480">
+    <el-table :data="tableData" :size="size" :cell-style="{padding:'3px 0'}"
+              :header-cell-style="{background:'#EEEEEE',color:'#606266'}" max-height="480"
+              v-loading="tableLoading" :element-loading-text="$t('action.loading')">
       <el-table-column type="index" :index="returnIndex" label="序号" width="80"></el-table-column>
       <template v-for="item in headers">
         <el-table-column :label="item.label" :prop="item.prop">
@@ -87,21 +89,22 @@
         },
         data(){
             return {
+                tableLoading:false,
                 size:'small',
                 keywords:'',
                 tableData:[],
                 headers:[
                     {label:'航班',prop:'airfight'},
-                    {label:'商品种类',prop:'goodtype'},
-                    {label:'商品代码',prop:'goodnum'}
+                    {label:'货物类型',prop:'goodtype'},
+                    {label:'货物代码',prop:'goodnum'}
                 ],
                 currentPage:1,
                 pageSize:10,
                 total:0,
                 formHeaders:[
                     // {label:'航班',prop:'airfight'},
-                    {label:'商品种类',prop:'goodtype'},
-                    {label:'商品代码',prop:'goodnum'}
+                    {label:'货物类型',prop:'goodtype'},
+                    {label:'货物代码',prop:'goodnum'}
                 ],
                 dialogVisible:false,
                 dialogTitle:'',
@@ -112,8 +115,8 @@
                 },
                 dataFormRules:{
                     airfight:[{required:true,message:"请输入航班",trigger:'blur'}],
-                    goodtype:[{required:true,message:"请输入商品种类",trigger:'blur'}],
-                    goodnum:[{required:true,message:"请输入商品代码",trigger:'blur'}]
+                    goodtype:[{required:true,message:"请输入货物类型",trigger:'blur'}],
+                    goodnum:[{required:true,message:"请输入货物代码",trigger:'blur'}]
                 },
                 airflightCompanyOptions:[
                     {label:'东航'},
@@ -128,6 +131,7 @@
         },
         methods:{
             returnList(){
+                this.tableLoading=true
                 const columnFilter={
                     keywords:{name:'keywords',value:this.keywords},
                 }
@@ -140,6 +144,7 @@
                     if(res.code==200){
                         this.tableData=res.data.content
                         this.total=res.data.totalSize
+                        this.tableLoading=false
                     }
                 })
             },

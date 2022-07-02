@@ -15,6 +15,7 @@ import * as flight from './moudules/flight'
 import * as transfer from './moudules/transfer'
 import * as goods from './moudules/goods'
 import * as ratio from './moudules/ratio'
+import * as mincharges from './moudules/mincharges'
 
 // 默认全部导出 这里是所有的接口
 export default {
@@ -31,5 +32,6 @@ export default {
   flight,
   transfer,
   goods,
-  ratio
+  ratio,
+  mincharges
 }

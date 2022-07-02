@@ -3,7 +3,7 @@
     <div class="toolbar" style="float:left;padding-top:10px;">
       <el-form :inline="true" :size="size">
         <el-form-item>
-          <el-input v-model="keywords" placeholder="请输入"></el-input>
+          <el-input v-model="keywords" placeholder="货物类型"></el-input>
         </el-form-item>
         <el-form-item>
           <kt-button icon="fa fa-search" :label="$t('action.search')" perms="data:ratio:search" type="primary"
@@ -31,7 +31,8 @@
       </el-form>
     </div>
     <el-table :data="tableData" :size="size" :cell-style="{padding:'3px 0'}" max-height="480"
-              :header-cell-style="{background:'#EEEEEE',color:'#606266'}">
+              :header-cell-style="{background:'#EEEEEE',color:'#606266'}"
+              v-loading="tableLoading" :element-loading-text="$t('action.loading')">
       <el-table-column type="index" :index="returnIndex" label="序号" width="60px"></el-table-column>
       <template v-for="item in headers">
         <el-table-column :label="item.label" :prop="item.prop" :width="item.width" show-overflow-tooltip>
@@ -86,7 +87,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="航班号" prop="flightNumArray">
-          <el-select v-model="dataForm.flightNumArray" style="width:100%" multiple>
+          <el-select v-model="dataForm.flightNumArray" style="width:100%" multiple @change="changeFlight">
             <template v-for="item in flightNumOptions">
               <el-option :label="item.flightNum" :value="item.flightNum"></el-option>
             </template>
@@ -100,7 +101,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="货物类型" prop="rateclass">
-          <el-select v-model="dataForm.rateclass" style="width:100%">
+          <el-select v-model="dataForm.rateclass" style="width:100%" @change="changeGoodType">
             <template v-for="item in goodTypeOptions">
               <el-option :label="item.goodtype" :value="item.goodtype"></el-option>
             </template>
@@ -136,6 +137,7 @@
         },
         data() {
             return {
+                tableLoading:false,
                 size: 'small',
                 keywords: '',
                 tableData: [],
@@ -199,6 +201,7 @@
         },
         methods: {
             returnList() {
+                this.tableLoading=true
                 const columnFilter = {
                     keywords: {name: 'keywords', value: this.keywords},
                 }
@@ -211,6 +214,7 @@
                     if (res.code == 200) {
                         this.tableData = res.data.content
                         this.total = res.data.totalSize
+                        this.tableLoading=false
                     }
                 })
             },
@@ -231,6 +235,10 @@
             },
             addInfo() {
                 this.getSendNameOptions()
+                this.dataForm={}
+                this.destinationOptions=[]
+                this.flightNumOptions=[]
+                this.goodTypeOptions=[]
                 this.dialogTitle = '新增'
                 this.dialogVisible = true
             },
@@ -239,6 +247,9 @@
                 row.flightNumArray = row.flightnum.split(',')
                 row.sendNameArray = row.sendname.split(',')
                 this.dataForm = Object.assign({}, row)
+                this.getDestinationOptions
+                this.getGoodTypeOptions
+                this.getFlightOptions()
                 this.dialogTitle = '编辑'
                 this.dialogVisible = true
             },
@@ -296,14 +307,18 @@
                 })
             },
             changeFlightCompany(val) {// 改变航空公司获取目的站列表和货物类型列表
+                this.$forceUpdate()
                 this.flightNumOptions = []
                 this.dataForm.flightNumArray = []
                 this.dataForm.destination = ''
                 this.dataForm.rateclass = ''
                 this.goodTypeOptions = []
-                console.log(val)
+                this.getDestinationOptions()
+                this.getGoodTypeOptions()
+            },
+            getDestinationOptions(){
                 this.$api.flight.returnStationList({
-                    flightName: val,
+                    flightName: this.dataForm.station,
                     executiontNum: null
                 }).then(res => {
                     console.log(res)
@@ -311,8 +326,10 @@
                         this.destinationOptions = res.data
                     }
                 })
+            },
+            getGoodTypeOptions(){
                 this.$api.goods.searchGoods({
-                    airFight: val
+                    airFight: this.dataForm.station
                 }).then(res => {
                     console.log(res)
                     if (res.code == 200) {
@@ -320,12 +337,20 @@
                     }
                 })
             },
-            changeDestination(val) {// 改变目的站获取航班号列表
+            changeGoodType(){
+                this.$forceUpdate()
+            },
+            changeFlight(){
+                this.$forceUpdate()
+            },
+            changeDestination() {// 改变目的站获取航班号列表
                 this.dataForm.flightNumArray = []
-                console.log(val)
+                this.getFlightOptions()
+            },
+            getFlightOptions(){
                 this.$api.flight.returnStationList({
                     flightName: this.dataForm.station,
-                    executiontNum: val
+                    executiontNum: this.dataForm.destination
                 }).then(res => {
                     console.log(res)
                     if (res.code == 200) {
