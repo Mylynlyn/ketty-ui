@@ -19,11 +19,11 @@
                      :on-success="fileSuccess"
                      :on-error="fileError"
                      :show-file-list="false" >
-            <kt-button icon="fa fa-cloud-upload" label="批量导入" perms="data:good:upload" type="primary"></kt-button>
+            <kt-button icon="fa fa-cloud-upload" label="批量导入" perms="data:transfer:upload" type="primary"></kt-button>
           </el-upload>
         </el-form-item>
         <el-form-item>
-          <kt-button icon="fa fa-download" label="下载模板" perms="data:good:download" type="text"
+          <kt-button icon="fa fa-download" label="下载模板" perms="data:transfer:download" type="text"
                      @click="downloadTemplate"></kt-button>
         </el-form-item>
       </el-form>

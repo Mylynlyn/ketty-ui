@@ -6,10 +6,10 @@
           <el-input v-model="keywords" placeholder="航班"></el-input>
         </el-form-item>
         <el-form-item>
-          <kt-button icon="fa fa-search" :label="$t('action.search')" perms="data:transfer:search" type="primary" @click="search"/>
+          <kt-button icon="fa fa-search" :label="$t('action.search')" perms="data:mincharges:search" type="primary" @click="search"/>
         </el-form-item>
         <el-form-item>
-          <kt-button icon="fa fa-plus" :label="$t('action.add')" perms="data:transfer:add" type="primary" @click="addInfo"></kt-button>
+          <kt-button icon="fa fa-plus" :label="$t('action.add')" perms="data:mincharges:add" type="primary" @click="addInfo"></kt-button>
         </el-form-item>
         <el-form-item>
           <el-upload accept=".xls, .xlsx"
@@ -19,11 +19,11 @@
                      :on-success="fileSuccess"
                      :on-error="fileError"
                      :show-file-list="false" >
-            <kt-button icon="fa fa-cloud-upload" label="批量导入" perms="data:good:upload" type="primary"></kt-button>
+            <kt-button icon="fa fa-cloud-upload" label="批量导入" perms="data:mincharges:upload" type="primary"></kt-button>
           </el-upload>
         </el-form-item>
         <el-form-item>
-          <kt-button icon="fa fa-download" label="下载模板" perms="data:good:download" type="text"
+          <kt-button icon="fa fa-download" label="下载模板" perms="data:mincharges:download" type="text"
                      @click="downloadTemplate"></kt-button>
         </el-form-item>
       </el-form>
@@ -39,9 +39,9 @@
       <el-table-column label="操作">
         <template slot-scope="scope">
           <kt-button type="text" :size="size" icon="el-icon-edit" @click="editInfo(scope.$index,scope.row)"
-                     perms="data:transfer:edit" :label="$t('action.edit')"></kt-button>
+                     perms="data:mincharges:edit" :label="$t('action.edit')"></kt-button>
           <kt-button type="text" :size="size" icon="el-icon-delete" @click="deleteInfo(scope.$index,scope.row)"
-                     perms="data:transfer:delete" :label="$t('action.delete')"></kt-button>
+                     perms="data:mincharges:delete" :label="$t('action.delete')"></kt-button>
         </template>
       </el-table-column>
     </el-table>
